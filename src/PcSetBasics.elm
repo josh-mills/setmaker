@@ -1,4 +1,4 @@
-module PcSetBasics exposing (PcSet(..), aggregate, cardinality, comparePcInts, complement, icVector, invertSet, normalForm, primeForm, setInts, setModulus, setToString, transposeSet, transposeToZero)
+module PcSetBasics exposing (PcSet(..), aggregate, cardinality, comparePcInts, complement, icCount, icVector, invertSet, normalForm, primeForm, setInts, setModulus, setToString, transposeSet, transposeToZero)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
@@ -163,6 +163,18 @@ icVector (PcSet edo pcs) =
     in
     Array.initialize vectorLength (\i -> Dict.get (i + 1) intervalCounts)
         |> Array.map (Maybe.withDefault 0)
+
+
+{-| Count of the number of occurences of the specified interval class in the set.
+This is more efficient than looking up the interval in an IC vector if you only
+need a single ic rather than the whole vector.
+-}
+icCount : Int -> PcSet -> Int
+icCount ic (PcSet modulus pcs) =
+    List.Extra.uniquePairs pcs
+        |> List.map (\( a, b ) -> intervalClass modulus a b)
+        |> List.filter (\i -> i == ic)
+        |> List.length
 
 
 transposeToZero : Edo -> List PcInt -> List PcInt

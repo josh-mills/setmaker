@@ -271,3 +271,34 @@ maxIcsForCardinality modulus ic cardinality =
     PcSetBasics.icVector set
         |> Array.get (ic - 1)
         |> Maybe.withDefault 42
+
+
+{-| Array of minimally saturated sets for a given interval class.
+Index position corresponds to the cardinality of the set, beginning with 0
+(empty set) and continuing through the the full aggregate.
+-}
+minimallySaturatedSets : Edo -> Int -> Array PcSet
+minimallySaturatedSets modulus intervalClass =
+    saturatedSets orderToMinimizeIC modulus intervalClass
+
+
+{-| Array of maximally saturated sets for a given interval class.
+Index position corresponds to the cardinality of the set, beginning with 0
+(empty set) and continuing through the the full aggregate.
+-}
+maximallySaturatedSets : Edo -> Int -> Array PcSet
+maximallySaturatedSets modulus intervalClass =
+    saturatedSets orderToMaximizeIC modulus intervalClass
+
+
+saturatedSets : (Int -> Int -> List Int) -> Edo -> Int -> Array PcSet
+saturatedSets pcOrderingFunction modulus intervalClass =
+    let
+        m =
+            edoToInt modulus
+
+        pcOrder : List PcInt
+        pcOrder =
+            pcOrderingFunction m intervalClass |> List.map (PcInt.pcInt modulus)
+    in
+    Array.initialize (m + 1) (\n -> List.take n pcOrder |> PcSet modulus)

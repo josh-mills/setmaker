@@ -1,13 +1,13 @@
 module Main exposing (main)
 
-import Array
+import Array exposing (Array)
 import Browser
 import Html exposing (Html, button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
 import Html.Attributes exposing (id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import IntervalCycles exposing (iccvString, wiccvString)
+import IntervalCycles exposing (iccvString, maximallySaturatedSets, minimallySaturatedSets, wiccvString)
 import PcInt exposing (Edo, PcInt, edoFromInt, edoToInt, invertPcInt, listFromInput, pcInt, toString, transposePcInt)
-import PcSetBasics exposing (PcSet(..), icVector, normalForm, setToString)
+import PcSetBasics exposing (PcSet(..), icCount, icVector, normalForm, setToString)
 import PitchClass exposing (PitchClass, listFromInput, toInt)
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
 
@@ -205,7 +205,7 @@ viewCycleOrders modulus =
             m // 2
     in
     div []
-        [ h3 [] [ text "Ordering to Maximize Interval Classes" ]
+        [ h3 [] [ text "Possible Ordering to Maximize Interval Classes" ]
         , ol []
             (List.range 1 maxIc
                 |> List.map (IntervalCycles.orderToMaximizeIC m)
@@ -213,7 +213,7 @@ viewCycleOrders modulus =
                 |> List.map (String.join ", ")
                 |> List.map (\s -> li [] [ text s ])
             )
-        , h3 [] [ text "Ordering to Minimize Interval Classes" ]
+        , h3 [] [ text "Possible Ordering to Minimize Interval Classes" ]
         , ol []
             (List.range 1 maxIc
                 |> List.map (IntervalCycles.orderToMinimizeIC m)
@@ -221,22 +221,21 @@ viewCycleOrders modulus =
                 |> List.map (String.join ", ")
                 |> List.map (\s -> li [] [ text s ])
             )
-        , p [] [ text "(I don't really need these.)" ]
         ]
 
 
 viewMinIcOccurences : Edo -> Html Msg
 viewMinIcOccurences modulus =
-    viewMinOrMaxIcOccurences "Minimum Occurences of IC for a given cardinality" IntervalCycles.minIcsForCardinality modulus
+    viewMinOrMaxIcOccurences "Minimum Occurences of IC for a given cardinality" IntervalCycles.minimallySaturatedSets modulus
 
 
 viewMaxIcOccurences : Edo -> Html Msg
 viewMaxIcOccurences modulus =
-    viewMinOrMaxIcOccurences "Maximum Occurences of IC for a given cardinality" IntervalCycles.maxIcsForCardinality modulus
+    viewMinOrMaxIcOccurences "Maximum Occurences of IC for a given cardinality" IntervalCycles.maximallySaturatedSets modulus
 
 
-viewMinOrMaxIcOccurences : String -> (Edo -> Int -> Int -> Int) -> Edo -> Html Msg
-viewMinOrMaxIcOccurences heading f modulus =
+viewMinOrMaxIcOccurences : String -> (Edo -> Int -> Array PcSet) -> Edo -> Html Msg
+viewMinOrMaxIcOccurences heading setsGenerator modulus =
     let
         m =
             edoToInt modulus
@@ -246,10 +245,17 @@ viewMinOrMaxIcOccurences heading f modulus =
 
         makeRow : Int -> Html Msg
         makeRow ic =
+            let
+                setArray : Array PcSet
+                setArray =
+                    setsGenerator modulus ic
+            in
             Html.tr []
                 (Html.td [] [ text (String.fromInt ic) ]
                     :: (List.range 1 m
-                            |> List.map (f modulus ic)
+                            |> List.map (\i -> Array.get i setArray)
+                            |> List.map (Maybe.withDefault (PcSet modulus []))
+                            |> List.map (icCount ic)
                             |> List.map String.fromInt
                             |> List.map (\s -> Html.td [] [ text s ])
                        )

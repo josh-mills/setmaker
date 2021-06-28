@@ -148,7 +148,7 @@ suite =
 
 
 
-
+helpers : Test
 helpers = 
     describe "Helper functions"
         [ describe "testing rotations"
