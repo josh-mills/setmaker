@@ -219,6 +219,20 @@ helpers =
                     orderToInitialNothing [Just 1, Just 2, Nothing, Just 4, Just 5, Nothing, Just 7]
                         |> Expect.equal [Nothing, Just 4, Just 5, Nothing, Just 7, Just 1, Just 2]
             ]
+        , describe "initial sublists"
+            [ test "[0, 1, 2, 3] -> [ [0], [0, 1], [0, 1, 2], [0, 1, 2, 3] ]" <|
+                \_ ->
+                    sublistsFromHead [0, 1, 2, 3]
+                        |> Expect.equal [ [0], [0, 1], [0, 1, 2], [0, 1, 2, 3] ]
+            , test "[\"foo\"] -> [ [\"foo\"] ]" <|
+                \_ ->
+                    sublistsFromHead ["foo"]
+                        |> Expect.equal [ ["foo"] ]
+            , test "[] -> []" <|
+                \_ ->
+                    sublistsFromHead []
+                        |> Expect.equal [ ]
+            ]
         ]
 
 

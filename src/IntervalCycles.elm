@@ -277,7 +277,7 @@ maxIcsForCardinality modulus ic cardinality =
 Index position corresponds to the cardinality of the set, beginning with 0
 (empty set) and continuing through the the full aggregate.
 -}
-minimallySaturatedSets : Edo -> Int -> Array PcSet
+minimallySaturatedSets : Edo -> Int -> List PcSet
 minimallySaturatedSets modulus intervalClass =
     saturatedSets orderToMinimizeIC modulus intervalClass
 
@@ -286,12 +286,12 @@ minimallySaturatedSets modulus intervalClass =
 Index position corresponds to the cardinality of the set, beginning with 0
 (empty set) and continuing through the the full aggregate.
 -}
-maximallySaturatedSets : Edo -> Int -> Array PcSet
+maximallySaturatedSets : Edo -> Int -> List PcSet
 maximallySaturatedSets modulus intervalClass =
     saturatedSets orderToMaximizeIC modulus intervalClass
 
 
-saturatedSets : (Int -> Int -> List Int) -> Edo -> Int -> Array PcSet
+saturatedSets : (Int -> Int -> List Int) -> Edo -> Int -> List PcSet
 saturatedSets pcOrderingFunction modulus intervalClass =
     let
         m =
@@ -301,4 +301,5 @@ saturatedSets pcOrderingFunction modulus intervalClass =
         pcOrder =
             pcOrderingFunction m intervalClass |> List.map (PcInt.pcInt modulus)
     in
-    Array.initialize (m + 1) (\n -> List.take n pcOrder |> PcSet modulus)
+    Helpers.sublistsFromHead pcOrder
+        |> List.map (PcSet modulus)

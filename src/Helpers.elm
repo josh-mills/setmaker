@@ -1,4 +1,4 @@
-module Helpers exposing (compareLists, orderToInitialNothing, rotationalArrays, wrapList)
+module Helpers exposing (compareLists, orderToInitialNothing, rotationalArrays, sublistsFromHead, wrapList)
 
 import List.Extra
 
@@ -92,3 +92,33 @@ orderToInitialNothing l =
     in
     List.Extra.break isNothing l
         |> (\( a, b ) -> b ++ a)
+
+
+{-| Take a list and return a list of sublists from the first element
+to each other element.
+
+[0, 1, 2, 3] -> [ [0], [0, 1], [0, 1, 2], [0, 1, 2, 3] ]
+
+["foo"] -> [ ["foo"] ]
+
+[] -> []
+
+-}
+sublistsFromHead : List a -> List (List a)
+sublistsFromHead list =
+    let
+        go : List (List a) -> List a -> List (List a)
+        go acc remaining =
+            case ( acc, remaining ) of
+                ( [], next :: rest ) ->
+                    go [ [ next ] ] rest
+
+                ( _, [] ) ->
+                    acc
+
+                ( h :: _, next :: rest ) ->
+                    go ((next :: h) :: acc) rest
+    in
+    go [] list
+        |> List.map List.reverse
+        |> List.reverse

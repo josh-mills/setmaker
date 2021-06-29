@@ -234,7 +234,7 @@ viewMaxIcOccurences modulus =
     viewMinOrMaxIcOccurences "Maximum Occurences of IC for a given cardinality" IntervalCycles.maximallySaturatedSets modulus
 
 
-viewMinOrMaxIcOccurences : String -> (Edo -> Int -> Array PcSet) -> Edo -> Html Msg
+viewMinOrMaxIcOccurences : String -> (Edo -> Int -> List PcSet) -> Edo -> Html Msg
 viewMinOrMaxIcOccurences heading setsGenerator modulus =
     let
         m =
@@ -246,16 +246,13 @@ viewMinOrMaxIcOccurences heading setsGenerator modulus =
         makeRow : Int -> Html Msg
         makeRow ic =
             let
-                setArray : Array PcSet
-                setArray =
+                sets : List PcSet
+                sets =
                     setsGenerator modulus ic
             in
             Html.tr []
                 (Html.td [] [ text (String.fromInt ic) ]
-                    :: (List.range 1 m
-                            |> List.map (\i -> Array.get i setArray)
-                            |> List.map (Maybe.withDefault (PcSet modulus []))
-                            |> List.map (icCount ic)
+                    :: (List.map (icCount ic) sets
                             |> List.map String.fromInt
                             |> List.map (\s -> Html.td [] [ text s ])
                        )
