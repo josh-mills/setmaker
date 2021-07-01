@@ -273,7 +273,7 @@ maxIcsForCardinality modulus ic cardinality =
         |> Maybe.withDefault 42
 
 
-{-| Array of minimally saturated sets for a given interval class.
+{-| List of minimally saturated sets for a given interval class.
 Index position corresponds to the cardinality of the set, beginning with 0
 (empty set) and continuing through the the full aggregate.
 -}
@@ -282,7 +282,7 @@ minimallySaturatedSets modulus intervalClass =
     saturatedSets orderToMinimizeIC modulus intervalClass
 
 
-{-| Array of maximally saturated sets for a given interval class.
+{-| List of maximally saturated sets for a given interval class.
 Index position corresponds to the cardinality of the set, beginning with 0
 (empty set) and continuing through the the full aggregate.
 -}

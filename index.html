@@ -6358,6 +6358,24 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $elm$core$List$intersperse = F2(
+	function (sep, xs) {
+		if (!xs.b) {
+			return _List_Nil;
+		} else {
+			var hd = xs.a;
+			var tl = xs.b;
+			var step = F2(
+				function (x, rest) {
+					return A2(
+						$elm$core$List$cons,
+						sep,
+						A2($elm$core$List$cons, x, rest));
+				});
+			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
+			return A2($elm$core$List$cons, hd, spersed);
+		}
+	});
 var $elm$html$Html$p = _VirtualDom_node('p');
 var $author$project$Transformations$Inversion = function (a) {
 	return {$: 'Inversion', a: a};
@@ -6880,6 +6898,47 @@ var $author$project$PcSetBasics$primeForm = function (set) {
 			return A2($author$project$PcSetBasics$PcSet, edo, original);
 	}
 };
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$html$Html$sub = _VirtualDom_node('sub');
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$printTransformation = function (t) {
+	if (t.$ === 'Transposition') {
+		var i = t.a;
+		return A2(
+			$elm$html$Html$span,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$elm$html$Html$text(' T'),
+					A2(
+					$elm$html$Html$sub,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(i))
+						]))
+				]));
+	} else {
+		var i = t.a;
+		return A2(
+			$elm$html$Html$span,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$elm$html$Html$text(' I'),
+					A2(
+					$elm$html$Html$sub,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(i))
+						]))
+				]));
+	}
+};
 var $author$project$PcInt$toString = function (_v0) {
 	var a = _v0.a;
 	return $elm$core$String$fromInt(a);
@@ -6891,21 +6950,9 @@ var $author$project$PcSetBasics$setToString = function (_v0) {
 		', ',
 		A2($elm$core$List$map, $author$project$PcInt$toString, pcs)) + '}');
 };
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Transformations$transformationToString = function (t) {
-	if (t.$ === 'Transposition') {
-		var i = t.a;
-		return 'T_' + $elm$core$String$fromInt(i);
-	} else {
-		var i = t.a;
-		return 'I_' + $elm$core$String$fromInt(i);
-	}
-};
 var $author$project$Main$viewComplement = function (pcSet) {
 	var c = $author$project$PcSetBasics$complement(pcSet);
 	var cpf = $author$project$PcSetBasics$primeForm(c);
-	var transformations = A2($author$project$Transformations$possibleTransformations, c, cpf);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -6930,13 +6977,21 @@ var $author$project$Main$viewComplement = function (pcSet) {
 						$elm$html$Html$text(
 						$author$project$PcSetBasics$setToString(c)),
 						$elm$html$Html$text(' = '),
-						$elm$html$Html$text(
 						A2(
-							$elm$core$String$join,
-							', ',
+						$elm$html$Html$span,
+						_List_Nil,
+						A2(
+							$elm$core$List$intersperse,
+							A2(
+								$elm$html$Html$span,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text(' / ')
+									])),
 							A2(
 								$elm$core$List$map,
-								$author$project$Transformations$transformationToString,
+								$author$project$Main$printTransformation,
 								A2($author$project$Transformations$possibleTransformations, c, cpf)))),
 						$elm$html$Html$text(' of '),
 						$elm$html$Html$text(
@@ -7828,56 +7883,26 @@ var $author$project$IntervalCycles$minimallySaturatedSets = F2(
 var $author$project$Main$viewMinIcOccurences = function (modulus) {
 	return A3($author$project$Main$viewMinOrMaxIcOccurences, 'Minimum Occurences of IC for a given cardinality', $author$project$IntervalCycles$minimallySaturatedSets, modulus);
 };
-var $elm$html$Html$span = _VirtualDom_node('span');
-var $elm$html$Html$sub = _VirtualDom_node('sub');
-var $author$project$Main$printTransformation = function (t) {
-	if (t.$ === 'Transposition') {
-		var i = t.a;
-		return A2(
-			$elm$html$Html$span,
-			_List_Nil,
-			_List_fromArray(
-				[
-					$elm$html$Html$text(' T'),
-					A2(
-					$elm$html$Html$sub,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(i))
-						]))
-				]));
-	} else {
-		var i = t.a;
-		return A2(
-			$elm$html$Html$span,
-			_List_Nil,
-			_List_fromArray(
-				[
-					$elm$html$Html$text(' I'),
-					A2(
-					$elm$html$Html$sub,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(i))
-						]))
-				]));
-	}
-};
 var $author$project$Main$listTransformationsOfPrimeForm = function (set) {
 	return A2(
 		$elm$html$Html$span,
 		_List_Nil,
 		A2(
-			$elm$core$List$map,
-			$author$project$Main$printTransformation,
+			$elm$core$List$intersperse,
 			A2(
-				$author$project$Transformations$possibleTransformations,
-				$author$project$PcSetBasics$primeForm(set),
-				set)));
+				$elm$html$Html$span,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(' / ')
+					])),
+			A2(
+				$elm$core$List$map,
+				$author$project$Main$printTransformation,
+				A2(
+					$author$project$Transformations$possibleTransformations,
+					$author$project$PcSetBasics$primeForm(set),
+					set))));
 };
 var $elm$core$List$partition = F2(
 	function (pred, list) {

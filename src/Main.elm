@@ -283,8 +283,6 @@ viewComplement pcSet =
         cpf =
             PcSetBasics.primeForm c
 
-        transformations =
-            Transformations.possibleTransformations c cpf
     in
     div [ id "complement" ]
         [ h3 [] [ text "Related Sets / Set Classes" ]
@@ -292,10 +290,10 @@ viewComplement pcSet =
             [ text "Complement: "
             , text (setToString <| c)
             , text " = "
-            , text
+            , span []
                 (Transformations.possibleTransformations c cpf
-                    |> List.map Transformations.transformationToString
-                    |> String.join ", "
+                    |> List.map printTransformation
+                    |> List.intersperse (span [] [text " / "])
                 )
             , text " of "
             , text (PcSetBasics.setToString cpf)
@@ -324,6 +322,7 @@ listTransformationsOfPrimeForm set =
     span []
         (possibleTransformations (PcSetBasics.primeForm set) set
             |> List.map printTransformation
+            |> List.intersperse (span [] [text " / "])
         )
 
 
