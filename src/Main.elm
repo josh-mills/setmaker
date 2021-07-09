@@ -3,13 +3,14 @@ module Main exposing (main)
 import Array exposing (Array)
 import Browser
 import Html exposing (Html, button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
-import Html.Attributes exposing (id, placeholder, type_, value)
+import Html.Attributes as Attr exposing (id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import IntervalCycles exposing (iccvString, maximallySaturatedSets, minimallySaturatedSets, wiccvString)
+import IntervalCycles exposing (iccvString, maximallySaturatedSets, minimallySaturatedSets, maximumWICCs, minimumWICCs, wiccvString)
 import PcInt exposing (Edo, PcInt, edoFromInt, edoToInt, invertPcInt, listFromInput, pcInt, toString, transposePcInt)
 import PcSetBasics exposing (PcSet(..), icCount, icVector, normalForm, setToString)
 import PitchClass exposing (PitchClass, listFromInput, toInt)
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
+import PcSetBasics exposing (cardinality)
 
 
 
@@ -31,6 +32,7 @@ type alias Model =
     , pcSet : PcSet
     , edo : Edo
     , weightingConstant : Float
+    , icToMinimize : Int
     }
 
 
@@ -41,6 +43,7 @@ init =
     , pcSet = PcSet (edoFromInt 12) []
     , edo = edoFromInt 12
     , weightingConstant = 1.2
+    , icToMinimize = 1
     }
 
 
@@ -53,6 +56,7 @@ type Msg
     | UpdateEdo String
     | Calculate
     | Reset
+    | UpdateIc String
 
 
 update : Msg -> Model -> Model
@@ -95,6 +99,9 @@ update msg model =
         Reset ->
             { model | userInput = "", pcSet = PcSet model.edo [], pitchClasses = [] }
 
+        UpdateIc ic ->
+            { model | icToMinimize = Maybe.withDefault 1 <| String.toInt ic }
+
 
 
 -- VIEW
@@ -104,11 +111,13 @@ view : Model -> Html Msg
 view model =
     div []
         [ viewUI model
-        , viewCycleOrders model.edo
+        , viewIntervalCycles model.weightingConstant model.pcSet
+        , viewCycleOrders model
         , viewMinIcOccurences model.edo
         , viewMaxIcOccurences model.edo
+        , viewMinWICCs model.edo model.weightingConstant
+        , viewMaxWICCs model.edo model.weightingConstant
         , viewSetFacts model
-        , viewIntervalCycles model.weightingConstant model.pcSet
         , viewComplement model.pcSet
         ]
 
@@ -129,6 +138,9 @@ viewUI model =
             [ text (String.join ", " (List.map PitchClass.toString model.pitchClasses))
             , text (" " ++ setToString model.pcSet)
             ]
+        , p []
+            [ text "Cardinality: "
+            , text (cardinality model.pcSet |> String.fromInt)]
         , button [ onClick Reset ] [ text "reset" ]
         ]
 
@@ -195,11 +207,11 @@ viewIntervalCycles weightingConstant set =
         ]
 
 
-viewCycleOrders : Edo -> Html Msg
-viewCycleOrders modulus =
+viewCycleOrders : Model -> Html Msg
+viewCycleOrders model =
     let
         m =
-            edoToInt modulus
+            edoToInt model.edo
 
         maxIc =
             m // 2
@@ -213,13 +225,31 @@ viewCycleOrders modulus =
                 |> List.map (String.join ", ")
                 |> List.map (\s -> li [] [ text s ])
             )
-        , h3 [] [ text "Possible Ordering to Minimize Interval Classes" ]
+        , h3 [] [ text "Possible Ordering to Minimize Interval Classes (Without Regard for IC Cycles)" ]
         , ol []
             (List.range 1 maxIc
                 |> List.map (IntervalCycles.orderToMinimizeIC m)
                 |> List.map (List.map String.fromInt)
                 |> List.map (String.join ", ")
                 |> List.map (\s -> li [] [ text s ])
+            )
+        , h3 [] [text "Possible Ordering to Minimize Interval Class Cyles for a Given Cardinality"]
+        , p []
+            [ text "IC to minimize: "
+            , input 
+                [ type_ "number"
+                , Attr.min "1"
+                , Attr.max (String.fromInt <| (\i -> i // 2) <| edoToInt model.edo)
+                , value (String.fromInt model.icToMinimize)
+                , onInput UpdateIc 
+                ]
+                []
+            ]
+        , Html.ol []
+            (List.range 1 (edoToInt model.edo)
+                |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToMinimize i)
+                |> List.map PcSetBasics.setToString
+                |> List.map (\s -> li [] [text s])
             )
         ]
 
@@ -271,6 +301,70 @@ viewMinOrMaxIcOccurences heading setsGenerator modulus =
                         |> List.map makeRow
                    )
             )
+        ]
+
+
+viewMinWICCs : Edo -> Float -> Html Msg
+viewMinWICCs edo weightingConstant =
+    let
+        round2 n =
+            n * 100 |> round |> toFloat |> (\x -> x / 100)
+
+        makeTR : List Float -> Html Msg
+        makeTR vals =
+            Html.tr []
+                (List.map (\x -> String.fromFloat <| round2 x) vals
+                    |> List.map (\s -> Html.td [] [text s])
+                )
+
+        makeTRs : Array (Array Float) -> List (Html Msg)
+        makeTRs a =
+            Array.map (Array.toList) a
+                |> Array.map makeTR
+                |> Array.toList
+    in
+    div []
+        [ h3 [] [text "minimum WICC values"]
+        , Html.table []
+            [ Html.thead [] 
+                (List.range 0 (edoToInt edo)
+                    |> List.map String.fromInt
+                    |> List.map (\s -> Html.th [] [text s])
+                )
+            , Html.tbody []
+                ( minimumWICCs edo weightingConstant
+                        |> makeTRs
+                    )
+            ]
+        ]
+
+viewMaxWICCs edo weightingConstant =
+    let
+        round2 n =
+            n * 100 |> round |> toFloat |> (\x -> x / 100)
+
+        makeTR : List Float -> Html Msg
+        makeTR vals =
+            Html.tr []
+                (List.map (\x -> String.fromFloat <| round2 x) vals
+                    |> List.map (\s -> Html.td [] [text s])
+                )
+
+        makeTRs : Array (Array Float) -> List (Html Msg)
+        makeTRs a =
+            Array.map (Array.toList) a
+                |> Array.map makeTR
+                |> Array.toList
+    in
+    div []
+        [ h3 [] [text "maximum WICC values"]
+        , Html.table []
+            [ Html.thead [] []
+            , Html.tbody []
+                ( maximumWICCs edo weightingConstant
+                        |> makeTRs
+                    )
+            ]
         ]
 
 

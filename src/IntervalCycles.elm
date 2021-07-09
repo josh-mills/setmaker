@@ -8,6 +8,7 @@ import List.Extra
 import PcInt exposing (Edo, PcInt, edoToInt)
 import PcSetBasics exposing (PcSet(..), cardinality)
 import Set exposing (Set(..))
+import PcInt exposing (pcInt)
 
 
 type alias IntervalCycleSet =
@@ -209,6 +210,8 @@ orderToMaximizeIC modulus ic =
         |> List.map (Maybe.withDefault 0)
 
 
+{- THIS IS NOT USEFUL.
+It will minimize the IC, but not the interval cycle _clustering_. -}
 orderToMinimizeIC : Int -> Int -> List Int
 orderToMinimizeIC modulus ic =
     let
@@ -273,6 +276,42 @@ maxIcsForCardinality modulus ic cardinality =
         |> Maybe.withDefault 42
 
 
+{-| To minimize the number of occurences of an IC, all we need is a general
+ordering to minimize that IC and a number of PCs to take. But to maximally
+break up interval cycles, we also need to know the cardinality of the set.
+-}
+minCycleSaturationForCardinality : Edo -> Int -> Int -> PcSet
+minCycleSaturationForCardinality modulus ic cardinality =
+    let
+        gic : List (List Int)
+        gic = 
+            genericIntervalCycle (edoToInt modulus) ic
+                |> List.map (List.map <| Maybe.withDefault 0)
+
+        numCycles : Int
+        numCycles = List.length gic
+
+        numGaps : Int
+        numGaps = (edoToInt modulus) - cardinality
+
+        gapsToDistribute : List Int
+        gapsToDistribute =
+            List.repeat numCycles (numGaps // numCycles)
+                |> List.indexedMap (\i a ->
+                    if (i < modBy numCycles numGaps) then
+                        a + 1
+                    else
+                        a
+                    )
+            
+    in
+    List.Extra.zip gic gapsToDistribute
+        |> List.map (\(cycle, gapsNeeded) -> Helpers.distributeGaps cycle gapsNeeded )
+        |> List.foldl List.append []
+        |> List.map (pcInt modulus)
+        |> PcSet modulus
+
+
 {-| List of minimally saturated sets for a given interval class.
 Index position corresponds to the cardinality of the set, beginning with 0
 (empty set) and continuing through the the full aggregate.
@@ -303,3 +342,54 @@ saturatedSets pcOrderingFunction modulus intervalClass =
     in
     Helpers.sublistsFromHead pcOrder
         |> List.map (PcSet modulus)
+
+
+type alias MinWICC = Array (Array Float)
+
+
+{-| Array of float arrays.
+The outer array is the position of the integer class (beware off-by-one errors).
+The inner array is the cardinality of the set (index 0 is the empty set).
+-}
+minimumWICCs : Edo -> Float -> Array (Array Float)
+minimumWICCs edo weightingConstant =
+    let
+        maxIC = (edoToInt edo) // 2
+    in
+    List.range 1 maxIC
+        |> List.map (minimumWICCsForIC edo weightingConstant)
+        |> Array.fromList
+
+
+{-| position in the array indicates cardinality -}
+minimumWICCsForIC : Edo -> Float -> Int -> Array Float
+minimumWICCsForIC edo weightingConstant ic =
+    Array.initialize (edoToInt edo + 1) (minCycleSaturationForCardinality edo ic)
+        |> Array.map (wiccv weightingConstant)
+        |> Array.map (List.Extra.getAt ( ic - 1 ) )
+        |> Array.map (Maybe.withDefault 0)
+    -- minimallySaturatedSets edo ic
+    --     |> List.map (wiccv weightingConstant)
+    --     |> List.map (List.Extra.getAt ( ic - 1 ) )
+    --     |> List.map (Maybe.withDefault 0)
+    --     |> Array.fromList
+
+
+maximumWICCs : Edo -> Float -> Array (Array Float)
+maximumWICCs edo weightingConstant =
+    let
+        maxIC = (edoToInt edo) // 2
+    in
+    List.range 0 maxIC
+        |> List.map (maximumWICCsForIC edo weightingConstant)
+        |> Array.fromList
+
+
+
+maximumWICCsForIC : Edo -> Float -> Int -> Array Float
+maximumWICCsForIC edo weightingConstant ic =
+    maximallySaturatedSets edo ic
+        |> List.map (wiccv weightingConstant)
+        |> List.map (List.Extra.getAt ( ic - 1 ) )
+        |> List.map (Maybe.withDefault 0)
+        |> Array.fromList
