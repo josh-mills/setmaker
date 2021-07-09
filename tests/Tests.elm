@@ -233,6 +233,24 @@ helpers =
                     sublistsFromHead []
                         |> Expect.equal [ ]
             ]
+        , describe "distribute gaps"
+            [ test "[ 1, 2, 3, 4 ] 1 -> [ 2, 3, 4]" <|
+                \_ ->
+                    Helpers.distributeGaps [1, 2, 3, 4] 1
+                        |> Expect.equal [2, 3, 4]
+            , test "[ 1, 2, 3, 4 ] 2 -> [ 2, 4]" <|
+                \_ ->
+                    Helpers.distributeGaps [1, 2, 3, 4] 2
+                        |> Expect.equal [2, 4]
+            , test "[ 1, 2, 3, 4, 5] 2 -> [ 2, 4, 5]" <|
+                \_ ->
+                    Helpers.distributeGaps [1, 2, 3, 4, 5] 2
+                        |> Expect.equal [2, 4, 5]
+            , test "[ 1, 2, 3, 4, 5, 6] 2 -> [ 2, 3, 5, 6]" <|
+                \_ ->
+                    Helpers.distributeGaps [1, 2, 3, 4, 5, 6] 2
+                        |> Expect.equal [2, 3, 5, 6]
+            ]
         ]
 
 

@@ -1,4 +1,4 @@
-module Helpers exposing (compareLists, orderToInitialNothing, rotationalArrays, sublistsFromHead, wrapList)
+module Helpers exposing (compareLists, distributeGaps, orderToInitialNothing, rotationalArrays, scale, sublistsFromHead, wrapList)
 
 import List.Extra
 
@@ -122,3 +122,32 @@ sublistsFromHead list =
     go [] list
         |> List.map List.reverse
         |> List.reverse
+
+
+
+{-| Take a list and a number of elements to remove from that list.
+It will remove that number of elements, distributed evenly.
+
+distributeGaps [ 1, 2, 3, 4 ] 1 
+--> [ 2, 3, 4]
+
+distributeGaps [ 1, 2, 3, 4 ] 2
+--> [ 2, 4]
+
+distributeGaps [ 1, 2, 3, 4, 5 ] 2
+--> [ 2, 4, 5]
+-}
+distributeGaps : List a -> Int -> List a
+distributeGaps list gaps =
+    if gaps <= 0 then
+        list
+    else if gaps >= List.length list then
+        []
+    else
+        List.Extra.splitAt (List.length list // gaps) list
+            |> (\(l1, l2) -> List.drop 1 l1 ++ distributeGaps l2 (gaps - 1) )
+
+
+scale : Float -> Float -> Float -> Float
+scale min max val =
+    (val - min) / (max - min)
