@@ -251,6 +251,14 @@ helpers =
                     Helpers.distributeGaps [1, 2, 3, 4, 5, 6] 2
                         |> Expect.equal [2, 3, 5, 6]
             ]
+            , test "[ 1, 2, 3, 4, 5, 6] 0 -> [ 1, 2, 3, 4, 5, 6]" <|
+                \_ ->
+                    Helpers.distributeGaps [1, 2, 3, 4, 5, 6 ] 0
+                        |> Expect.equal [ 1, 2, 3, 4, 5, 6 ]
+            , test "[ 1, 2, 3, 4, 5, 6] 42 -> []" <|
+                \_ ->
+                    Helpers.distributeGaps [1, 2, 3, 4, 5, 6 ] 42
+                        |> Expect.equal []
         ]
 
 
