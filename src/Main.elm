@@ -111,14 +111,14 @@ view : Model -> Html Msg
 view model =
     div []
         [ viewUI model
-        , viewIntervalCycles model.weightingConstant model.pcSet
-        , viewCycleOrders model
-        , viewMinIcOccurences model.edo
-        , viewMaxIcOccurences model.edo
-        , viewMinWICCs model.edo model.weightingConstant
-        , viewMaxWICCs model.edo model.weightingConstant
         , viewSetFacts model
         , viewComplement model.pcSet
+        , viewIntervalCycles model.weightingConstant model.pcSet
+        , viewCycleOrders model
+        -- , viewMinIcOccurences model.edo
+        -- , viewMaxIcOccurences model.edo
+        -- , viewMinWICCs model.edo model.weightingConstant
+        -- , viewMaxWICCs model.edo model.weightingConstant
         ]
 
 
@@ -138,9 +138,6 @@ viewUI model =
             [ text (String.join ", " (List.map PitchClass.toString model.pitchClasses))
             , text (" " ++ setToString model.pcSet)
             ]
-        , p []
-            [ text "Cardinality: "
-            , text (cardinality model.pcSet |> String.fromInt)]
         , button [ onClick Reset ] [ text "reset" ]
         ]
 
@@ -156,6 +153,9 @@ viewSetFacts model =
             , text " of "
             , text (printPrimeForm <| PcSetBasics.primeForm model.pcSet)
             ]
+        , p []
+            [ text "Cardinality: "
+            , text (cardinality model.pcSet |> String.fromInt)]
         , p []
             [ text "IC vector: "
             , text (printIcVector model)
@@ -175,23 +175,22 @@ viewIntervalCycles weightingConstant set =
         viewCycleFragmentations : PcSet -> List String
         viewCycleFragmentations pcset =
             IntervalCycles.intervalCycleFragmentations pcset
-                -- List (List (List (Maybe Int)))
-                -- |> List.map (Array.map Array.toList)
                 |> List.map (List.map <| List.map <| Maybe.map String.fromInt)
                 |> List.map (List.map <| List.map <| Maybe.withDefault "_")
                 |> List.map (List.map <| String.join ", ")
                 |> List.map (List.map (\s -> "[" ++ s ++ "]"))
-                -- |> List.map Array.toList
                 |> List.map (String.join " ")
     in
     div [ id "intervac-cycles" ]
         [ h3 [] [ text "Interval Cycles" ]
-        , p [] [ text "Interval Cycles:" ]
+        , p [] [ text "Generic Interval Cycles:" ]
         , ol []
             (viewAllCycles (PcSetBasics.setModulus set)
                 |> List.map (\s -> li [] [ text s ])
             )
-        , p [] [ text "Interval Cycle Fragmentation:" ]
+        , p []
+            [ text "Interval Cycle Fragmentation of "
+            , text (setToString set)]
         , ol []
             (viewCycleFragmentations set
                 |> List.map (\s -> li [] [ text s ])
@@ -210,32 +209,22 @@ viewIntervalCycles weightingConstant set =
 viewCycleOrders : Model -> Html Msg
 viewCycleOrders model =
     let
-        m =
-            edoToInt model.edo
+        prettifySet : PcSet -> PcSet
+        prettifySet (PcSet edo pcs) =
+            List.sortBy PcInt.pcIntToInt pcs
+                |> PcSetBasics.transposeToZero edo 
+                |> PcSet edo
 
-        maxIc =
-            m // 2
+        maxOrdering : List PcInt
+        maxOrdering = 
+            IntervalCycles.orderToMaximizeIC (edoToInt model.edo) model.icToMinimize
+                |> List.map (pcInt model.edo)
+
     in
     div []
-        [ h3 [] [ text "Possible Ordering to Maximize Interval Classes" ]
-        , ol []
-            (List.range 1 maxIc
-                |> List.map (IntervalCycles.orderToMaximizeIC m)
-                |> List.map (List.map String.fromInt)
-                |> List.map (String.join ", ")
-                |> List.map (\s -> li [] [ text s ])
-            )
-        , h3 [] [ text "Possible Ordering to Minimize Interval Classes (Without Regard for IC Cycles)" ]
-        , ol []
-            (List.range 1 maxIc
-                |> List.map (IntervalCycles.orderToMinimizeIC m)
-                |> List.map (List.map String.fromInt)
-                |> List.map (String.join ", ")
-                |> List.map (\s -> li [] [ text s ])
-            )
-        , h3 [] [text "Possible Ordering to Minimize Interval Class Cyles for a Given Cardinality"]
+        [ h3 [] [ text "Possible Orderings to Minimize or Maximize Interval Classes" ]
         , p []
-            [ text "IC to minimize: "
+            [ text "IC to minimize/maximize: "
             , input 
                 [ type_ "number"
                 , Attr.min "1"
@@ -245,9 +234,20 @@ viewCycleOrders model =
                 ]
                 []
             ]
+        , h4 [] [text "Possible Ordering to Maximize Interval Class Cyles for a Given Cardinality"]
+        , Html.ol []
+            ( List.range 1 (edoToInt model.edo)
+                |> List.map (\i -> List.take i maxOrdering)
+                |> List.map (PcSet model.edo)
+                |> List.map prettifySet
+                |> List.map PcSetBasics.setToString
+                |> List.map (\s -> li [] [text s])
+            )
+        , h4 [] [text "Possible Ordering to Minimize Interval Class Cyles for a Given Cardinality"]
         , Html.ol []
             (List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToMinimize i)
+                |> List.map prettifySet
                 |> List.map PcSetBasics.setToString
                 |> List.map (\s -> li [] [text s])
             )
@@ -379,8 +379,7 @@ viewComplement pcSet =
 
     in
     div [ id "complement" ]
-        [ h3 [] [ text "Related Sets / Set Classes" ]
-        , p []
+        [ p []
             [ text "Complement: "
             , text (setToString <| c)
             , text " = "

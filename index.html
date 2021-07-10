@@ -533,11 +533,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.ac.J === region.an.J)
+	if (region.ab.J === region.an.J)
 	{
-		return 'on line ' + region.ac.J;
+		return 'on line ' + region.ab.J;
 	}
-	return 'on lines ' + region.ac.J + ' through ' + region.an.J;
+	return 'on lines ' + region.ab.J + ' through ' + region.an.J;
 }
 
 
@@ -2719,8 +2719,8 @@ var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
 		x: func(record.x),
-		ad: record.ad,
-		aa: record.aa
+		ac: record.ac,
+		_: record._
 	}
 });
 
@@ -2989,10 +2989,10 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 
 		var value = result.a;
 		var message = !tag ? value : tag < 3 ? value.a : value.x;
-		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ad;
+		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ac;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.aa) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value._) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -3982,7 +3982,7 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 		impl.bD,
 		impl.bz,
 		function(sendToApp, initialModel) {
-			var divertHrefToApp = impl.ab && impl.ab(sendToApp)
+			var divertHrefToApp = impl.aa && impl.aa(sendToApp)
 			var view = impl.bE;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
@@ -4057,7 +4057,7 @@ function _Browser_application(impl)
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
-		ab: function(sendToApp)
+		aa: function(sendToApp)
 		{
 			key.a = sendToApp;
 			_Browser_window.addEventListener('popstate', key);
@@ -4572,15 +4572,15 @@ var $author$project$PcInt$edoFromInt = function (_int) {
 	return A3($elm$core$Basics$clamp, 1, 96, _int);
 };
 var $author$project$Main$init = {
-	d: $author$project$PcInt$edoFromInt(12),
-	I: 1,
+	e: $author$project$PcInt$edoFromInt(12),
+	F: 1,
 	o: A2(
 		$author$project$PcSetBasics$PcSet,
 		$author$project$PcInt$edoFromInt(12),
 		_List_Nil),
 	M: _List_Nil,
 	R: '',
-	S: 1.2
+	af: 1.2
 };
 var $elm$core$Result$Err = function (a) {
 	return {$: 1, a: a};
@@ -4906,10 +4906,10 @@ var $elm$core$Array$builderToArray = F2(
 		if (!builder.b) {
 			return A4(
 				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.e),
+				$elm$core$Elm$JsArray$length(builder.d),
 				$elm$core$Array$shiftStep,
 				$elm$core$Elm$JsArray$empty,
-				builder.e);
+				builder.d);
 		} else {
 			var treeLen = builder.b * $elm$core$Array$branchFactor;
 			var depth = $elm$core$Basics$floor(
@@ -4918,10 +4918,10 @@ var $elm$core$Array$builderToArray = F2(
 			var tree = A2($elm$core$Array$treeFromBuilder, correctNodeList, builder.b);
 			return A4(
 				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.e) + treeLen,
+				$elm$core$Elm$JsArray$length(builder.d) + treeLen,
 				A2($elm$core$Basics$max, 5, depth * $elm$core$Array$shiftStep),
 				tree,
-				builder.e);
+				builder.d);
 		}
 	});
 var $elm$core$Basics$idiv = _Basics_idiv;
@@ -4933,7 +4933,7 @@ var $elm$core$Array$initializeHelp = F5(
 				return A2(
 					$elm$core$Array$builderToArray,
 					false,
-					{f: nodeList, b: (len / $elm$core$Array$branchFactor) | 0, e: tail});
+					{f: nodeList, b: (len / $elm$core$Array$branchFactor) | 0, d: tail});
 			} else {
 				var leaf = $elm$core$Array$Leaf(
 					A3($elm$core$Elm$JsArray$initialize, $elm$core$Array$branchFactor, fromIndex, fn));
@@ -5857,18 +5857,18 @@ var $author$project$Main$update = F2(
 		switch (msg.$) {
 			case 0:
 				var input = msg.a;
-				var edo12 = $author$project$PcInt$edoToInt(model.d) === 12;
+				var edo12 = $author$project$PcInt$edoToInt(model.e) === 12;
 				var pcs = edo12 ? $author$project$PitchClass$listFromInput(input) : _List_Nil;
 				var set = edo12 ? A2(
 					$author$project$PcSetBasics$PcSet,
-					model.d,
+					model.e,
 					A2(
 						$elm$core$List$map,
-						$author$project$PcInt$pcInt(model.d),
+						$author$project$PcInt$pcInt(model.e),
 						A2($elm$core$List$map, $author$project$PitchClass$toInt, pcs))) : A2(
 					$author$project$PcSetBasics$PcSet,
-					model.d,
-					A2($author$project$PcInt$listFromInput, model.d, input));
+					model.e,
+					A2($author$project$PcInt$listFromInput, model.e, input));
 				return _Utils_update(
 					model,
 					{o: set, M: pcs, R: input});
@@ -5877,7 +5877,7 @@ var $author$project$Main$update = F2(
 				return _Utils_update(
 					model,
 					{
-						d: $author$project$PcInt$edoFromInt(
+						e: $author$project$PcInt$edoFromInt(
 							A2(
 								$elm$core$Maybe$withDefault,
 								12,
@@ -5889,7 +5889,7 @@ var $author$project$Main$update = F2(
 				return _Utils_update(
 					model,
 					{
-						o: A2($author$project$PcSetBasics$PcSet, model.d, _List_Nil),
+						o: A2($author$project$PcSetBasics$PcSet, model.e, _List_Nil),
 						M: _List_Nil,
 						R: ''
 					});
@@ -5898,7 +5898,7 @@ var $author$project$Main$update = F2(
 				return _Utils_update(
 					model,
 					{
-						I: A2(
+						F: A2(
 							$elm$core$Maybe$withDefault,
 							1,
 							$elm$core$String$toInt(ic))
@@ -6340,7 +6340,6 @@ var $author$project$PcSetBasics$complement = function (_v0) {
 					$elm$core$Set$fromList(
 						A2($elm$core$List$map, $author$project$PcInt$pcIntToInt, pcs))))));
 };
-var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -6954,13 +6953,6 @@ var $author$project$Main$viewComplement = function (pcSet) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$h3,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Related Sets / Set Classes')
-					])),
-				A2(
 				$elm$html$Html$p,
 				_List_Nil,
 				_List_fromArray(
@@ -6994,6 +6986,8 @@ var $author$project$Main$viewComplement = function (pcSet) {
 var $author$project$Main$UpdateIc = function (a) {
 	return {$: 4, a: a};
 };
+var $elm$html$Html$h3 = _VirtualDom_node('h3');
+var $elm$html$Html$h4 = _VirtualDom_node('h4');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$li = _VirtualDom_node('li');
 var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
@@ -7186,100 +7180,27 @@ var $author$project$IntervalCycles$orderToMaximizeIC = F2(
 				_List_Nil,
 				A2($author$project$IntervalCycles$genericIntervalCycle, modulus, ic)));
 	});
-var $lynn$elm_arithmetic$Arithmetic$divides = F2(
-	function (a, b) {
-		return !A2($elm$core$Basics$modBy, a, b);
-	});
-var $lynn$elm_arithmetic$Arithmetic$isEven = $lynn$elm_arithmetic$Arithmetic$divides(2);
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
-var $elm$core$Basics$not = _Basics_not;
-var $lynn$elm_arithmetic$Arithmetic$isOdd = A2($elm$core$Basics$composeL, $elm$core$Basics$not, $lynn$elm_arithmetic$Arithmetic$isEven);
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
-};
-var $elm_community$list_extra$List$Extra$indexedFoldr = F3(
-	function (func, acc, list) {
-		var step = F2(
-			function (x, _v0) {
-				var i = _v0.a;
-				var thisAcc = _v0.b;
-				return _Utils_Tuple2(
-					i - 1,
-					A3(func, i, x, thisAcc));
-			});
-		return A3(
-			$elm$core$List$foldr,
-			step,
-			_Utils_Tuple2(
-				$elm$core$List$length(list) - 1,
-				acc),
-			list).b;
-	});
-var $elm_community$list_extra$List$Extra$removeIfIndex = function (predicate) {
-	return A2(
-		$elm_community$list_extra$List$Extra$indexedFoldr,
-		F3(
-			function (index, item, acc) {
-				return predicate(index) ? acc : A2($elm$core$List$cons, item, acc);
-			}),
-		_List_Nil);
-};
-var $elm_community$list_extra$List$Extra$rowsLength = function (listOfLists) {
-	if (!listOfLists.b) {
-		return 0;
-	} else {
-		var x = listOfLists.a;
-		return $elm$core$List$length(x);
-	}
-};
-var $elm_community$list_extra$List$Extra$transpose = function (listOfLists) {
-	return A3(
-		$elm$core$List$foldr,
-		$elm$core$List$map2($elm$core$List$cons),
-		A2(
-			$elm$core$List$repeat,
-			$elm_community$list_extra$List$Extra$rowsLength(listOfLists),
-			_List_Nil),
-		listOfLists);
-};
-var $author$project$IntervalCycles$orderToMinimizeIC = F2(
-	function (modulus, ic) {
-		var gic = A2($author$project$IntervalCycles$genericIntervalCycle, modulus, ic);
-		var f = function (l) {
-			return A3(
-				$elm$core$List$foldr,
-				$elm$core$List$append,
-				_List_Nil,
-				$elm_community$list_extra$List$Extra$transpose(l));
-		};
-		var odds = A2(
-			$elm$core$List$map,
-			$elm$core$Maybe$withDefault(0),
-			f(
-				A2(
-					$elm$core$List$map,
-					$elm_community$list_extra$List$Extra$removeIfIndex($lynn$elm_arithmetic$Arithmetic$isEven),
-					gic)));
-		var evens = A2(
-			$elm$core$List$map,
-			$elm$core$Maybe$withDefault(0),
-			f(
-				A2(
-					$elm$core$List$map,
-					$elm_community$list_extra$List$Extra$removeIfIndex($lynn$elm_arithmetic$Arithmetic$isOdd),
-					gic)));
-		return _Utils_ap(evens, odds);
-	});
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$viewCycleOrders = function (model) {
-	var m = $author$project$PcInt$edoToInt(model.d);
-	var maxIc = (m / 2) | 0;
+	var prettifySet = function (_v0) {
+		var edo = _v0.a;
+		var pcs = _v0.b;
+		return A2(
+			$author$project$PcSetBasics$PcSet,
+			edo,
+			A2(
+				$author$project$PcSetBasics$transposeToZero,
+				edo,
+				A2($elm$core$List$sortBy, $author$project$PcInt$pcIntToInt, pcs)));
+	};
+	var maxOrdering = A2(
+		$elm$core$List$map,
+		$author$project$PcInt$pcInt(model.e),
+		A2(
+			$author$project$IntervalCycles$orderToMaximizeIC,
+			$author$project$PcInt$edoToInt(model.e),
+			model.F));
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -7290,76 +7211,14 @@ var $author$project$Main$viewCycleOrders = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Possible Ordering to Maximize Interval Classes')
-					])),
-				A2(
-				$elm$html$Html$ol,
-				_List_Nil,
-				A2(
-					$elm$core$List$map,
-					function (s) {
-						return A2(
-							$elm$html$Html$li,
-							_List_Nil,
-							_List_fromArray(
-								[
-									$elm$html$Html$text(s)
-								]));
-					},
-					A2(
-						$elm$core$List$map,
-						$elm$core$String$join(', '),
-						A2(
-							$elm$core$List$map,
-							$elm$core$List$map($elm$core$String$fromInt),
-							A2(
-								$elm$core$List$map,
-								$author$project$IntervalCycles$orderToMaximizeIC(m),
-								A2($elm$core$List$range, 1, maxIc)))))),
-				A2(
-				$elm$html$Html$h3,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Possible Ordering to Minimize Interval Classes (Without Regard for IC Cycles)')
-					])),
-				A2(
-				$elm$html$Html$ol,
-				_List_Nil,
-				A2(
-					$elm$core$List$map,
-					function (s) {
-						return A2(
-							$elm$html$Html$li,
-							_List_Nil,
-							_List_fromArray(
-								[
-									$elm$html$Html$text(s)
-								]));
-					},
-					A2(
-						$elm$core$List$map,
-						$elm$core$String$join(', '),
-						A2(
-							$elm$core$List$map,
-							$elm$core$List$map($elm$core$String$fromInt),
-							A2(
-								$elm$core$List$map,
-								$author$project$IntervalCycles$orderToMinimizeIC(m),
-								A2($elm$core$List$range, 1, maxIc)))))),
-				A2(
-				$elm$html$Html$h3,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Possible Ordering to Minimize Interval Class Cyles for a Given Cardinality')
+						$elm$html$Html$text('Possible Orderings to Minimize or Maximize Interval Classes')
 					])),
 				A2(
 				$elm$html$Html$p,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('IC to minimize: '),
+						$elm$html$Html$text('IC to minimize/maximize: '),
 						A2(
 						$elm$html$Html$input,
 						_List_fromArray(
@@ -7371,12 +7230,19 @@ var $author$project$Main$viewCycleOrders = function (model) {
 									function (i) {
 										return (i / 2) | 0;
 									}(
-										$author$project$PcInt$edoToInt(model.d)))),
+										$author$project$PcInt$edoToInt(model.e)))),
 								$elm$html$Html$Attributes$value(
-								$elm$core$String$fromInt(model.I)),
+								$elm$core$String$fromInt(model.F)),
 								$elm$html$Html$Events$onInput($author$project$Main$UpdateIc)
 							]),
 						_List_Nil)
+					])),
+				A2(
+				$elm$html$Html$h4,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Possible Ordering to Maximize Interval Class Cyles for a Given Cardinality')
 					])),
 				A2(
 				$elm$html$Html$ol,
@@ -7397,13 +7263,55 @@ var $author$project$Main$viewCycleOrders = function (model) {
 						$author$project$PcSetBasics$setToString,
 						A2(
 							$elm$core$List$map,
-							function (i) {
-								return A3($author$project$IntervalCycles$minCycleSaturationForCardinality, model.d, model.I, i);
-							},
+							prettifySet,
 							A2(
-								$elm$core$List$range,
-								1,
-								$author$project$PcInt$edoToInt(model.d))))))
+								$elm$core$List$map,
+								$author$project$PcSetBasics$PcSet(model.e),
+								A2(
+									$elm$core$List$map,
+									function (i) {
+										return A2($elm$core$List$take, i, maxOrdering);
+									},
+									A2(
+										$elm$core$List$range,
+										1,
+										$author$project$PcInt$edoToInt(model.e)))))))),
+				A2(
+				$elm$html$Html$h4,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Possible Ordering to Minimize Interval Class Cyles for a Given Cardinality')
+					])),
+				A2(
+				$elm$html$Html$ol,
+				_List_Nil,
+				A2(
+					$elm$core$List$map,
+					function (s) {
+						return A2(
+							$elm$html$Html$li,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(s)
+								]));
+					},
+					A2(
+						$elm$core$List$map,
+						$author$project$PcSetBasics$setToString,
+						A2(
+							$elm$core$List$map,
+							prettifySet,
+							A2(
+								$elm$core$List$map,
+								function (i) {
+									return A3($author$project$IntervalCycles$minCycleSaturationForCardinality, model.e, model.F, i);
+								},
+								A2(
+									$elm$core$List$range,
+									1,
+									$author$project$PcInt$edoToInt(model.e)))))))
 			]));
 };
 var $elm$core$List$filter = F2(
@@ -7448,6 +7356,12 @@ var $elm_community$list_extra$List$Extra$groupWhile = F2(
 			items);
 	});
 var $elm_community$list_extra$List$Extra$group = $elm_community$list_extra$List$Extra$groupWhile($elm$core$Basics$eq);
+var $elm$core$Basics$not = _Basics_not;
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
 var $elm_community$list_extra$List$Extra$dropWhile = F2(
 	function (predicate, list) {
 		dropWhile:
@@ -7770,7 +7684,7 @@ var $author$project$Main$viewIntervalCycles = F2(
 					_List_Nil,
 					_List_fromArray(
 						[
-							$elm$html$Html$text('Interval Cycles:')
+							$elm$html$Html$text('Generic Interval Cycles:')
 						])),
 					A2(
 					$elm$html$Html$ol,
@@ -7793,7 +7707,9 @@ var $author$project$Main$viewIntervalCycles = F2(
 					_List_Nil,
 					_List_fromArray(
 						[
-							$elm$html$Html$text('Interval Cycle Fragmentation:')
+							$elm$html$Html$text('Interval Cycle Fragmentation of '),
+							$elm$html$Html$text(
+							$author$project$PcSetBasics$setToString(set))
 						])),
 					A2(
 					$elm$html$Html$ol,
@@ -7830,476 +7746,10 @@ var $author$project$Main$viewIntervalCycles = F2(
 						]))
 				]));
 	});
-var $author$project$Helpers$sublistsFromHead = function (list) {
-	var go = F2(
-		function (acc, remaining) {
-			go:
-			while (true) {
-				var _v0 = _Utils_Tuple2(acc, remaining);
-				if (!_v0.b.b) {
-					return acc;
-				} else {
-					if (!_v0.a.b) {
-						var _v1 = _v0.b;
-						var next = _v1.a;
-						var rest = _v1.b;
-						var $temp$acc = _List_fromArray(
-							[
-								_List_fromArray(
-								[next])
-							]),
-							$temp$remaining = rest;
-						acc = $temp$acc;
-						remaining = $temp$remaining;
-						continue go;
-					} else {
-						var _v2 = _v0.a;
-						var h = _v2.a;
-						var _v3 = _v0.b;
-						var next = _v3.a;
-						var rest = _v3.b;
-						var $temp$acc = A2(
-							$elm$core$List$cons,
-							A2($elm$core$List$cons, next, h),
-							acc),
-							$temp$remaining = rest;
-						acc = $temp$acc;
-						remaining = $temp$remaining;
-						continue go;
-					}
-				}
-			}
-		});
-	return $elm$core$List$reverse(
-		A2(
-			$elm$core$List$map,
-			$elm$core$List$reverse,
-			A2(go, _List_Nil, list)));
+var $author$project$PcSetBasics$cardinality = function (_v0) {
+	var pcs = _v0.b;
+	return $elm$core$List$length(pcs);
 };
-var $author$project$IntervalCycles$saturatedSets = F3(
-	function (pcOrderingFunction, modulus, intervalClass) {
-		var m = $author$project$PcInt$edoToInt(modulus);
-		var pcOrder = A2(
-			$elm$core$List$map,
-			$author$project$PcInt$pcInt(modulus),
-			A2(pcOrderingFunction, m, intervalClass));
-		return A2(
-			$elm$core$List$map,
-			$author$project$PcSetBasics$PcSet(modulus),
-			$author$project$Helpers$sublistsFromHead(pcOrder));
-	});
-var $author$project$IntervalCycles$maximallySaturatedSets = F2(
-	function (modulus, intervalClass) {
-		return A3($author$project$IntervalCycles$saturatedSets, $author$project$IntervalCycles$orderToMaximizeIC, modulus, intervalClass);
-	});
-var $elm$core$Basics$min = F2(
-	function (x, y) {
-		return (_Utils_cmp(x, y) < 0) ? x : y;
-	});
-var $author$project$PcInt$intervalClass = F3(
-	function (edo, pcA, pcB) {
-		var i = A3($author$project$PcInt$interval, edo, pcA, pcB);
-		return A2(
-			$elm$core$Basics$min,
-			i,
-			$author$project$PcInt$edoToInt(edo) - i);
-	});
-var $elm_community$list_extra$List$Extra$uniquePairs = function (xs) {
-	if (!xs.b) {
-		return _List_Nil;
-	} else {
-		var x = xs.a;
-		var xs_ = xs.b;
-		return _Utils_ap(
-			A2(
-				$elm$core$List$map,
-				function (y) {
-					return _Utils_Tuple2(x, y);
-				},
-				xs_),
-			$elm_community$list_extra$List$Extra$uniquePairs(xs_));
-	}
-};
-var $author$project$PcSetBasics$icCount = F2(
-	function (ic, _v0) {
-		var modulus = _v0.a;
-		var pcs = _v0.b;
-		return $elm$core$List$length(
-			A2(
-				$elm$core$List$filter,
-				function (i) {
-					return _Utils_eq(i, ic);
-				},
-				A2(
-					$elm$core$List$map,
-					function (_v1) {
-						var a = _v1.a;
-						var b = _v1.b;
-						return A3($author$project$PcInt$intervalClass, modulus, a, b);
-					},
-					$elm_community$list_extra$List$Extra$uniquePairs(pcs))));
-	});
-var $elm$html$Html$table = _VirtualDom_node('table');
-var $elm$html$Html$td = _VirtualDom_node('td');
-var $elm$html$Html$th = _VirtualDom_node('th');
-var $elm$html$Html$tr = _VirtualDom_node('tr');
-var $author$project$Main$viewMinOrMaxIcOccurences = F3(
-	function (heading, setsGenerator, modulus) {
-		var makeRow = function (ic) {
-			var sets = A2(setsGenerator, modulus, ic);
-			return A2(
-				$elm$html$Html$tr,
-				_List_Nil,
-				A2(
-					$elm$core$List$cons,
-					A2(
-						$elm$html$Html$td,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								$elm$core$String$fromInt(ic))
-							])),
-					A2(
-						$elm$core$List$map,
-						function (s) {
-							return A2(
-								$elm$html$Html$td,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text(s)
-									]));
-						},
-						A2(
-							$elm$core$List$map,
-							$elm$core$String$fromInt,
-							A2(
-								$elm$core$List$map,
-								$author$project$PcSetBasics$icCount(ic),
-								sets)))));
-		};
-		var m = $author$project$PcInt$edoToInt(modulus);
-		var maxIc = (m / 2) | 0;
-		return A2(
-			$elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$h3,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(heading)
-						])),
-					A2(
-					$elm$html$Html$table,
-					_List_Nil,
-					_Utils_ap(
-						A2(
-							$elm$core$List$cons,
-							A2(
-								$elm$html$Html$th,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('IC')
-									])),
-							A2(
-								$elm$core$List$map,
-								function (s) {
-									return A2(
-										$elm$html$Html$th,
-										_List_Nil,
-										_List_fromArray(
-											[
-												$elm$html$Html$text(s)
-											]));
-								},
-								A2(
-									$elm$core$List$map,
-									$elm$core$String$fromInt,
-									A2($elm$core$List$range, 1, m)))),
-						A2(
-							$elm$core$List$map,
-							makeRow,
-							A2($elm$core$List$range, 1, maxIc))))
-				]));
-	});
-var $author$project$Main$viewMaxIcOccurences = function (modulus) {
-	return A3($author$project$Main$viewMinOrMaxIcOccurences, 'Maximum Occurences of IC for a given cardinality', $author$project$IntervalCycles$maximallySaturatedSets, modulus);
-};
-var $elm$core$Elm$JsArray$map = _JsArray_map;
-var $elm$core$Array$map = F2(
-	function (func, _v0) {
-		var len = _v0.a;
-		var startShift = _v0.b;
-		var tree = _v0.c;
-		var tail = _v0.d;
-		var helper = function (node) {
-			if (!node.$) {
-				var subTree = node.a;
-				return $elm$core$Array$SubTree(
-					A2($elm$core$Elm$JsArray$map, helper, subTree));
-			} else {
-				var values = node.a;
-				return $elm$core$Array$Leaf(
-					A2($elm$core$Elm$JsArray$map, func, values));
-			}
-		};
-		return A4(
-			$elm$core$Array$Array_elm_builtin,
-			len,
-			startShift,
-			A2($elm$core$Elm$JsArray$map, helper, tree),
-			A2($elm$core$Elm$JsArray$map, func, tail));
-	});
-var $elm$core$Array$fromListHelp = F3(
-	function (list, nodeList, nodeListSize) {
-		fromListHelp:
-		while (true) {
-			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, list);
-			var jsArray = _v0.a;
-			var remainingItems = _v0.b;
-			if (_Utils_cmp(
-				$elm$core$Elm$JsArray$length(jsArray),
-				$elm$core$Array$branchFactor) < 0) {
-				return A2(
-					$elm$core$Array$builderToArray,
-					true,
-					{f: nodeList, b: nodeListSize, e: jsArray});
-			} else {
-				var $temp$list = remainingItems,
-					$temp$nodeList = A2(
-					$elm$core$List$cons,
-					$elm$core$Array$Leaf(jsArray),
-					nodeList),
-					$temp$nodeListSize = nodeListSize + 1;
-				list = $temp$list;
-				nodeList = $temp$nodeList;
-				nodeListSize = $temp$nodeListSize;
-				continue fromListHelp;
-			}
-		}
-	});
-var $elm$core$Array$fromList = function (list) {
-	if (!list.b) {
-		return $elm$core$Array$empty;
-	} else {
-		return A3($elm$core$Array$fromListHelp, list, _List_Nil, 0);
-	}
-};
-var $elm_community$list_extra$List$Extra$getAt = F2(
-	function (idx, xs) {
-		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
-			A2($elm$core$List$drop, idx, xs));
-	});
-var $author$project$IntervalCycles$maximumWICCsForIC = F3(
-	function (edo, weightingConstant, ic) {
-		return $elm$core$Array$fromList(
-			A2(
-				$elm$core$List$map,
-				$elm$core$Maybe$withDefault(0),
-				A2(
-					$elm$core$List$map,
-					$elm_community$list_extra$List$Extra$getAt(ic - 1),
-					A2(
-						$elm$core$List$map,
-						$author$project$IntervalCycles$wiccv(weightingConstant),
-						A2($author$project$IntervalCycles$maximallySaturatedSets, edo, ic)))));
-	});
-var $author$project$IntervalCycles$maximumWICCs = F2(
-	function (edo, weightingConstant) {
-		var maxIC = ($author$project$PcInt$edoToInt(edo) / 2) | 0;
-		return $elm$core$Array$fromList(
-			A2(
-				$elm$core$List$map,
-				A2($author$project$IntervalCycles$maximumWICCsForIC, edo, weightingConstant),
-				A2($elm$core$List$range, 0, maxIC)));
-	});
-var $elm$html$Html$tbody = _VirtualDom_node('tbody');
-var $elm$html$Html$thead = _VirtualDom_node('thead');
-var $author$project$Main$viewMaxWICCs = F2(
-	function (edo, weightingConstant) {
-		var round2 = function (n) {
-			return function (x) {
-				return x / 100;
-			}(
-				$elm$core$Basics$round(n * 100));
-		};
-		var makeTR = function (vals) {
-			return A2(
-				$elm$html$Html$tr,
-				_List_Nil,
-				A2(
-					$elm$core$List$map,
-					function (s) {
-						return A2(
-							$elm$html$Html$td,
-							_List_Nil,
-							_List_fromArray(
-								[
-									$elm$html$Html$text(s)
-								]));
-					},
-					A2(
-						$elm$core$List$map,
-						function (x) {
-							return $elm$core$String$fromFloat(
-								round2(x));
-						},
-						vals)));
-		};
-		var makeTRs = function (a) {
-			return $elm$core$Array$toList(
-				A2(
-					$elm$core$Array$map,
-					makeTR,
-					A2($elm$core$Array$map, $elm$core$Array$toList, a)));
-		};
-		return A2(
-			$elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$h3,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('maximum WICC values')
-						])),
-					A2(
-					$elm$html$Html$table,
-					_List_Nil,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$thead, _List_Nil, _List_Nil),
-							A2(
-							$elm$html$Html$tbody,
-							_List_Nil,
-							makeTRs(
-								A2($author$project$IntervalCycles$maximumWICCs, edo, weightingConstant)))
-						]))
-				]));
-	});
-var $author$project$IntervalCycles$minimallySaturatedSets = F2(
-	function (modulus, intervalClass) {
-		return A3($author$project$IntervalCycles$saturatedSets, $author$project$IntervalCycles$orderToMinimizeIC, modulus, intervalClass);
-	});
-var $author$project$Main$viewMinIcOccurences = function (modulus) {
-	return A3($author$project$Main$viewMinOrMaxIcOccurences, 'Minimum Occurences of IC for a given cardinality', $author$project$IntervalCycles$minimallySaturatedSets, modulus);
-};
-var $author$project$IntervalCycles$minimumWICCsForIC = F3(
-	function (edo, weightingConstant, ic) {
-		return A2(
-			$elm$core$Array$map,
-			$elm$core$Maybe$withDefault(0),
-			A2(
-				$elm$core$Array$map,
-				$elm_community$list_extra$List$Extra$getAt(ic - 1),
-				A2(
-					$elm$core$Array$map,
-					$author$project$IntervalCycles$wiccv(weightingConstant),
-					A2(
-						$elm$core$Array$initialize,
-						$author$project$PcInt$edoToInt(edo) + 1,
-						A2($author$project$IntervalCycles$minCycleSaturationForCardinality, edo, ic)))));
-	});
-var $author$project$IntervalCycles$minimumWICCs = F2(
-	function (edo, weightingConstant) {
-		var maxIC = ($author$project$PcInt$edoToInt(edo) / 2) | 0;
-		return $elm$core$Array$fromList(
-			A2(
-				$elm$core$List$map,
-				A2($author$project$IntervalCycles$minimumWICCsForIC, edo, weightingConstant),
-				A2($elm$core$List$range, 1, maxIC)));
-	});
-var $author$project$Main$viewMinWICCs = F2(
-	function (edo, weightingConstant) {
-		var round2 = function (n) {
-			return function (x) {
-				return x / 100;
-			}(
-				$elm$core$Basics$round(n * 100));
-		};
-		var makeTR = function (vals) {
-			return A2(
-				$elm$html$Html$tr,
-				_List_Nil,
-				A2(
-					$elm$core$List$map,
-					function (s) {
-						return A2(
-							$elm$html$Html$td,
-							_List_Nil,
-							_List_fromArray(
-								[
-									$elm$html$Html$text(s)
-								]));
-					},
-					A2(
-						$elm$core$List$map,
-						function (x) {
-							return $elm$core$String$fromFloat(
-								round2(x));
-						},
-						vals)));
-		};
-		var makeTRs = function (a) {
-			return $elm$core$Array$toList(
-				A2(
-					$elm$core$Array$map,
-					makeTR,
-					A2($elm$core$Array$map, $elm$core$Array$toList, a)));
-		};
-		return A2(
-			$elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$h3,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('minimum WICC values')
-						])),
-					A2(
-					$elm$html$Html$table,
-					_List_Nil,
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$thead,
-							_List_Nil,
-							A2(
-								$elm$core$List$map,
-								function (s) {
-									return A2(
-										$elm$html$Html$th,
-										_List_Nil,
-										_List_fromArray(
-											[
-												$elm$html$Html$text(s)
-											]));
-								},
-								A2(
-									$elm$core$List$map,
-									$elm$core$String$fromInt,
-									A2(
-										$elm$core$List$range,
-										0,
-										$author$project$PcInt$edoToInt(edo))))),
-							A2(
-							$elm$html$Html$tbody,
-							_List_Nil,
-							makeTRs(
-								A2($author$project$IntervalCycles$minimumWICCs, edo, weightingConstant)))
-						]))
-				]));
-	});
 var $author$project$Main$listTransformationsOfPrimeForm = function (set) {
 	return A2(
 		$elm$html$Html$span,
@@ -8367,6 +7817,59 @@ var $elm_community$list_extra$List$Extra$gatherWith = F2(
 	});
 var $elm_community$list_extra$List$Extra$gatherEquals = function (list) {
 	return A2($elm_community$list_extra$List$Extra$gatherWith, $elm$core$Basics$eq, list);
+};
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
+var $author$project$PcInt$intervalClass = F3(
+	function (edo, pcA, pcB) {
+		var i = A3($author$project$PcInt$interval, edo, pcA, pcB);
+		return A2(
+			$elm$core$Basics$min,
+			i,
+			$author$project$PcInt$edoToInt(edo) - i);
+	});
+var $elm$core$Elm$JsArray$map = _JsArray_map;
+var $elm$core$Array$map = F2(
+	function (func, _v0) {
+		var len = _v0.a;
+		var startShift = _v0.b;
+		var tree = _v0.c;
+		var tail = _v0.d;
+		var helper = function (node) {
+			if (!node.$) {
+				var subTree = node.a;
+				return $elm$core$Array$SubTree(
+					A2($elm$core$Elm$JsArray$map, helper, subTree));
+			} else {
+				var values = node.a;
+				return $elm$core$Array$Leaf(
+					A2($elm$core$Elm$JsArray$map, func, values));
+			}
+		};
+		return A4(
+			$elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A2($elm$core$Elm$JsArray$map, helper, tree),
+			A2($elm$core$Elm$JsArray$map, func, tail));
+	});
+var $elm_community$list_extra$List$Extra$uniquePairs = function (xs) {
+	if (!xs.b) {
+		return _List_Nil;
+	} else {
+		var x = xs.a;
+		var xs_ = xs.b;
+		return _Utils_ap(
+			A2(
+				$elm$core$List$map,
+				function (y) {
+					return _Utils_Tuple2(x, y);
+				},
+				xs_),
+			$elm_community$list_extra$List$Extra$uniquePairs(xs_));
+	}
 };
 var $author$project$PcSetBasics$icVector = function (_v0) {
 	var edo = _v0.a;
@@ -8454,6 +7957,16 @@ var $author$project$Main$viewSetFacts = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
+						$elm$html$Html$text('Cardinality: '),
+						$elm$html$Html$text(
+						$elm$core$String$fromInt(
+							$author$project$PcSetBasics$cardinality(model.o)))
+					])),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
 						$elm$html$Html$text('IC vector: '),
 						$elm$html$Html$text(
 						$author$project$Main$printIcVector(model))
@@ -8468,10 +7981,6 @@ var $author$project$Main$UpdateEdo = function (a) {
 	return {$: 1, a: a};
 };
 var $elm$html$Html$button = _VirtualDom_node('button');
-var $author$project$PcSetBasics$cardinality = function (_v0) {
-	var pcs = _v0.b;
-	return $elm$core$List$length(pcs);
-};
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 0, a: a};
@@ -8553,7 +8062,7 @@ var $author$project$Main$viewUI = function (model) {
 								$elm$html$Html$Attributes$type_('number'),
 								$elm$html$Html$Attributes$value(
 								$elm$core$String$fromInt(
-									$author$project$PcInt$edoToInt(model.d))),
+									$author$project$PcInt$edoToInt(model.e))),
 								$elm$html$Html$Events$onInput($author$project$Main$UpdateEdo)
 							]),
 						_List_Nil)
@@ -8588,16 +8097,6 @@ var $author$project$Main$viewUI = function (model) {
 						' ' + $author$project$PcSetBasics$setToString(model.o))
 					])),
 				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Cardinality: '),
-						$elm$html$Html$text(
-						$elm$core$String$fromInt(
-							$author$project$PcSetBasics$cardinality(model.o)))
-					])),
-				A2(
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
@@ -8616,14 +8115,10 @@ var $author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				$author$project$Main$viewUI(model),
-				A2($author$project$Main$viewIntervalCycles, model.S, model.o),
-				$author$project$Main$viewCycleOrders(model),
-				$author$project$Main$viewMinIcOccurences(model.d),
-				$author$project$Main$viewMaxIcOccurences(model.d),
-				A2($author$project$Main$viewMinWICCs, model.d, model.S),
-				A2($author$project$Main$viewMaxWICCs, model.d, model.S),
 				$author$project$Main$viewSetFacts(model),
-				$author$project$Main$viewComplement(model.o)
+				$author$project$Main$viewComplement(model.o),
+				A2($author$project$Main$viewIntervalCycles, model.af, model.o),
+				$author$project$Main$viewCycleOrders(model)
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$sandbox(
