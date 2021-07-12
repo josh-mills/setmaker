@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Array exposing (Array)
 import Browser
+import ForteNumbers
 import Html exposing (Html, button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
 import Html.Attributes as Attr exposing (id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -11,6 +12,7 @@ import PcSetBasics exposing (PcSet(..), icCount, icVector, normalForm, setToStri
 import PitchClass exposing (PitchClass, listFromInput, toInt)
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
 import PcSetBasics exposing (cardinality)
+import PcSetBasics exposing (primeForm)
 
 
 
@@ -33,6 +35,7 @@ type alias Model =
     , edo : Edo
     , weightingConstant : Float
     , icToMinimize : Int
+    , forteNumber : Maybe String
     }
 
 
@@ -44,6 +47,7 @@ init =
     , edo = edoFromInt 12
     , weightingConstant = 1.2
     , icToMinimize = 1
+    , forteNumber = Nothing
     }
 
 
@@ -88,7 +92,7 @@ update msg model =
                         PcInt.listFromInput model.edo input
                             |> PcSet model.edo
             in
-            { model | userInput = input, pitchClasses = pcs, pcSet = set }
+            { model | userInput = input, pitchClasses = pcs, pcSet = set, forteNumber = ForteNumbers.forteNum set }
 
         UpdateEdo input ->
             { model | edo = edoFromInt <| Maybe.withDefault 12 <| String.toInt input }
@@ -152,6 +156,13 @@ viewSetFacts model =
             , listTransformationsOfPrimeForm model.pcSet
             , text " of "
             , text (printPrimeForm <| PcSetBasics.primeForm model.pcSet)
+            , text
+                (case model.forteNumber of
+                    Just s ->
+                        ". Forte number: " ++ s
+                    Nothing ->
+                        ""
+                )
             ]
         , p []
             [ text "Cardinality: "
