@@ -1,10 +1,10 @@
-module ForteNumbers exposing (forteNum, primeFormForForteNumber)
+module ForteNumbers exposing (forteNum, primeFormForForteNumber, zRelatedNum)
 
 import Array exposing (Array)
 import Bitwise exposing (shiftRightBy)
 import Dict exposing (Dict)
 import Html exposing (i)
-import PcInt exposing (Edo, edoToInt, pcInt)
+import PcInt exposing (pcInt)
 import PcSetBasics exposing (PcSet(..), primeForm)
 import Set exposing (Set)
 
@@ -338,7 +338,8 @@ in that space as it is; no sense in trying to generalize this.
 pcSetFromBitVectorIndex : Int -> PcSet
 pcSetFromBitVectorIndex bitVec =
     let
-        edo = PcInt.edoFromInt 12
+        edo =
+            PcInt.edoFromInt 12
     in
     Array.initialize 12 (\i -> modBy 2 <| shiftRightBy i bitVec)
         |> Array.indexedMap
@@ -381,6 +382,20 @@ getForteNumber bitVecIndex =
         |> Maybe.withDefault " Error: cannot find Forte number"
 
 
+getZrelatedNumber : Int -> Maybe String
+getZrelatedNumber bitVecIndex =
+    Dict.get bitVecIndex setTable
+        |> Maybe.map (\( _, z, _ ) -> z)
+        |> Maybe.andThen
+            (\i ->
+                if i > 0 then
+                    Just (String.fromInt i)
+
+                else
+                    Nothing
+            )
+
+
 isSet12edo : PcSet -> Bool
 isSet12edo (PcSet edo _) =
     PcInt.edoToInt edo == 12
@@ -400,6 +415,25 @@ forteNum set =
 
     else
         Nothing
+
+
+zRelatedNum : PcSet -> Maybe String
+zRelatedNum set =
+    let
+        zNum =
+            if isSet12edo set then
+                getZrelatedNumber <| bitVectorIndex <| primeForm set
+
+            else
+                Nothing
+    in
+    Maybe.map
+        (\s ->
+            (String.fromInt <| PcSetBasics.cardinality set)
+                ++ "–z"
+                ++ s
+        )
+        zNum
 
 
 {-| Aleck Brinkman's "bit vector" is the base-10 number that translates into the prime form of the set if you represent it as base 2.

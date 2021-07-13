@@ -150,7 +150,7 @@ view model =
     div []
         [ viewUI model
         , viewSetFacts model
-        , viewComplement model.pcSet
+        , viewRelatedSets model.pcSet
         , viewIntervalCycles model.weightingConstant model.pcSet
         , viewCycleOrders model
         -- , viewMinIcOccurences model.edo
@@ -416,6 +416,14 @@ viewMaxWICCs edo weightingConstant =
         ]
 
 
+viewRelatedSets : PcSet -> Html Msg
+viewRelatedSets pcSet =
+    div []
+        [ h3 [] [ text "Related Sets" ]
+        , viewComplement pcSet
+        , viewZMate pcSet
+        ]
+
 viewComplement : PcSet -> Html Msg
 viewComplement pcSet =
     let
@@ -440,6 +448,23 @@ viewComplement pcSet =
             , text (PcSetBasics.setToString cpf)
             ]
         ]
+
+
+viewZMate : PcSet -> Html Msg
+viewZMate pcSet =
+    let
+        zMate = ForteNumbers.zRelatedNum pcSet
+    in
+    case zMate of
+        Just z ->
+            div [ id "z-related-mate" ]
+                [ p []
+                    [ text "Z-related pair: "
+                    , text z
+                    ]
+                ]
+        Nothing ->
+            div [ id "z-related-mate" ] []
 
 
 printIcVector : Model -> String
