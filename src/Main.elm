@@ -13,6 +13,7 @@ import PitchClass exposing (PitchClass, listFromInput, toInt)
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
 import PcSetBasics exposing (cardinality)
 import PcSetBasics exposing (primeForm)
+import Regex exposing (Regex, Match) 
 
 
 
@@ -72,6 +73,15 @@ update msg model =
                 edo12 =
                     edoToInt model.edo == 12
 
+                forteNumberRegex : Regex
+                forteNumberRegex =
+                    Maybe.withDefault Regex.never <|
+                        Regex.fromString "^(\\d{1,2})[-–][zZ]?(\\d{1,2})[zZ]?$"
+
+                isForteNumber : Bool
+                isForteNumber =
+                    edo12 && Regex.contains forteNumberRegex input
+
                 pcs : List PitchClass
                 pcs =
                     if edo12 then
@@ -82,7 +92,31 @@ update msg model =
 
                 set : PcSet
                 set =
-                    if edo12 then
+                    if isForteNumber then
+                        let
+                            matches : List Int
+                            matches = Regex.find forteNumberRegex input
+                                |> List.head
+                                |> Maybe.map .submatches
+                                |> Maybe.map (List.filterMap identity)
+                                |> Maybe.map (List.filterMap String.toInt)
+                                |> Maybe.map (List.take 2)
+                                |> Maybe.withDefault []
+
+                            card : Int
+                            card =
+                                List.head matches
+                                    |> Maybe.withDefault 0
+
+                            catNum : Int
+                            catNum =
+                                List.drop 1 matches
+                                    |> List.head
+                                    |> Maybe.withDefault 0
+                        in
+                        Maybe.withDefault (PcSet model.edo []) <|
+                            ForteNumbers.primeFormForForteNumber card catNum
+                    else if edo12 then
                         pcs
                             |> List.map PitchClass.toInt
                             |> List.map (PcInt.pcInt model.edo)
@@ -135,7 +169,10 @@ viewUI model =
             , input [ type_ "number", value (edoToInt model.edo |> String.fromInt), onInput UpdateEdo ] []
             ]
         , p []
-            [ text "Pitch classes: "
+            [ if edoToInt model.edo == 12 then
+                text "Pitch classes or Forte number: "
+            else
+                text "Pitch classes: "
             , input [ placeholder "type set...", value model.userInput, onInput Typing ] []
             ]
         , p []
@@ -233,7 +270,7 @@ viewCycleOrders model =
 
     in
     div []
-        [ h3 [] [ text "Possible Orderings to Minimize or Maximize Interval Classes" ]
+        [ h3 [] [ text "Possible Sets to Minimize or Maximize Interval Classes" ]
         , p []
             [ text "IC to minimize/maximize: "
             , input 
@@ -245,7 +282,7 @@ viewCycleOrders model =
                 ]
                 []
             ]
-        , h4 [] [text "Possible Ordering to Maximize Interval Class Cyles for a Given Cardinality"]
+        , h4 [] [text "Possible Sets to Maximize Interval Class Cyles for a Given Cardinality"]
         , Html.ol []
             ( List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> List.take i maxOrdering)
@@ -254,7 +291,7 @@ viewCycleOrders model =
                 |> List.map PcSetBasics.setToString
                 |> List.map (\s -> li [] [text s])
             )
-        , h4 [] [text "Possible Ordering to Minimize Interval Class Cyles for a Given Cardinality"]
+        , h4 [] [text "Possible Sets to Minimize Interval Class Cyles for a Given Cardinality"]
         , Html.ol []
             (List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToMinimize i)
