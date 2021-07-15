@@ -5,10 +5,9 @@ import Array exposing (Array)
 import Helpers
 import Html exposing (a)
 import List.Extra
-import PcInt exposing (Edo, PcInt, edoToInt)
+import PcInt exposing (Edo, PcInt, edoToInt, pcInt)
 import PcSetBasics exposing (PcSet(..), cardinality)
 import Set exposing (Set(..))
-import PcInt exposing (pcInt)
 
 
 type alias IntervalCycleSet =
@@ -76,46 +75,6 @@ intervalCycleFragmentations pcSet =
                     )
             )
 
-
-
-{--Okay, this isn't working. I need another algorithm.
-cycleSegNotWorking : IntervalCycleSet -> List Int
-cycleSegNotWorking icSet =
-    let
-        wrapIfNeeded : List Bool -> List Bool
-        wrapIfNeeded l =
-            if List.length l > 2 then
-                Helpers.wrapList l
-            else
-                l
-    in
-    
-    List.map
-        (List.map
-            (\m ->
-                case m of
-                    Just _ ->
-                        True
-
-                    Nothing ->
-                        False
-            )
-        )
-        icSet
-        -- : List (List Bool)
-        |> List.map wrapIfNeeded
-        -- : List (List Bool)
-        |> List.map List.Extra.group
-        -- : List (List ( Bool, List Bool ))
-        |> List.map (List.filter (\( b, _ ) -> b))
-        -- : List (List ( Bool, List Bool ))
-        |> List.map (List.map (\( _, l ) -> List.length l))
-        -- : List (List Int)
-        |> List.map (List.filter (\i -> i > 0) ) 
-        |> List.map List.sort
-        |> List.map List.reverse
-        |> List.foldl List.append []
--}
 
 
 cycleSeg : IntervalCycleSet -> List Int
@@ -210,8 +169,12 @@ orderToMaximizeIC modulus ic =
         |> List.map (Maybe.withDefault 0)
 
 
+
 {- THIS IS NOT USEFUL.
-It will minimize the IC, but not the interval cycle _clustering_. -}
+   It will minimize the IC, but not the interval cycle _clustering_.
+-}
+
+
 orderToMinimizeIC : Int -> Int -> List Int
 orderToMinimizeIC modulus ic =
     let
@@ -284,30 +247,41 @@ minCycleSaturationForCardinality : Edo -> Int -> Int -> PcSet
 minCycleSaturationForCardinality modulus ic cardinality =
     let
         gic : List (List Int)
-        gic = 
+        gic =
             genericIntervalCycle (edoToInt modulus) ic
                 |> List.map (List.map <| Maybe.withDefault 0)
 
         numCycles : Int
-        numCycles = List.length gic
+        numCycles =
+            List.length gic
 
         numGaps : Int
-        numGaps = (edoToInt modulus) - cardinality
+        numGaps =
+            edoToInt modulus - cardinality
 
         gapsToDistribute : List Int
         gapsToDistribute =
             List.repeat numCycles (numGaps // numCycles)
-                |> List.indexedMap (\i a ->
-                    if (i < modBy numCycles numGaps) then
-                        a + 1
-                    else
-                        a
+                |> List.indexedMap
+                    (\i a ->
+                        if i < modBy numCycles numGaps then
+                            a + 1
+
+                        else
+                            a
                     )
-            
     in
     List.Extra.zip gic gapsToDistribute
-        |> List.map (\(cycle, gapsNeeded) -> Helpers.distributeGaps cycle gapsNeeded )
+        |> List.map (\( cycle, gapsNeeded ) -> Helpers.distributeGaps cycle gapsNeeded)
         |> List.foldl List.append []
+        |> List.map (pcInt modulus)
+        |> PcSet modulus
+
+
+maxCycleSaturationForCardinality : Edo -> Int -> Int -> PcSet
+maxCycleSaturationForCardinality modulus ic cardinality =
+    orderToMaximizeIC (edoToInt modulus) ic
+        |> List.take cardinality
         |> List.map (pcInt modulus)
         |> PcSet modulus
 
@@ -344,9 +318,6 @@ saturatedSets pcOrderingFunction modulus intervalClass =
         |> List.map (PcSet modulus)
 
 
-type alias MinWICC = Array (Array Float)
-
-
 {-| Array of float arrays.
 The outer array is the position of the integer class (beware off-by-one errors).
 The inner array is the cardinality of the set (index 0 is the empty set).
@@ -354,42 +325,87 @@ The inner array is the cardinality of the set (index 0 is the empty set).
 minimumWICCs : Edo -> Float -> Array (Array Float)
 minimumWICCs edo weightingConstant =
     let
-        maxIC = (edoToInt edo) // 2
+        maxIC =
+            edoToInt edo // 2
     in
     List.range 1 maxIC
         |> List.map (minimumWICCsForIC edo weightingConstant)
         |> Array.fromList
 
 
-{-| position in the array indicates cardinality -}
+{-| position in the array indicates cardinality
+-}
 minimumWICCsForIC : Edo -> Float -> Int -> Array Float
 minimumWICCsForIC edo weightingConstant ic =
     Array.initialize (edoToInt edo + 1) (minCycleSaturationForCardinality edo ic)
         |> Array.map (wiccv weightingConstant)
-        |> Array.map (List.Extra.getAt ( ic - 1 ) )
+        |> Array.map (List.Extra.getAt (ic - 1))
         |> Array.map (Maybe.withDefault 0)
-    -- minimallySaturatedSets edo ic
-    --     |> List.map (wiccv weightingConstant)
-    --     |> List.map (List.Extra.getAt ( ic - 1 ) )
-    --     |> List.map (Maybe.withDefault 0)
-    --     |> Array.fromList
 
 
 maximumWICCs : Edo -> Float -> Array (Array Float)
 maximumWICCs edo weightingConstant =
     let
-        maxIC = (edoToInt edo) // 2
+        maxIC =
+            edoToInt edo // 2
     in
     List.range 0 maxIC
         |> List.map (maximumWICCsForIC edo weightingConstant)
         |> Array.fromList
 
 
-
 maximumWICCsForIC : Edo -> Float -> Int -> Array Float
 maximumWICCsForIC edo weightingConstant ic =
     maximallySaturatedSets edo ic
         |> List.map (wiccv weightingConstant)
-        |> List.map (List.Extra.getAt ( ic - 1 ) )
+        |> List.map (List.Extra.getAt (ic - 1))
         |> List.map (Maybe.withDefault 0)
         |> Array.fromList
+
+
+type alias CyclicProportionSaturation =
+    { minimum : Float
+    , maximum : Float
+    , value : Float
+    }
+
+
+setEdo : PcSet -> Edo
+setEdo (PcSet edo _) =
+    edo
+
+
+
+{- Cyclic Proportion Saturation Vector -}
+
+
+makeCPSATV : Float -> PcSet -> List CyclicProportionSaturation
+makeCPSATV weightingConstant set =
+    let
+        cardinality =
+            PcSetBasics.cardinality set
+
+        edo : Edo
+        edo =
+            (\(PcSet e _) -> e) set
+
+        maxIc =
+            edoToInt edo
+
+        wiccVals : (Edo -> Int -> Int -> PcSet) -> List Float
+        wiccVals cycleSaturationForCardFunction =
+            List.range 1 maxIc
+                |> List.map (\ic -> cycleSaturationForCardFunction edo ic cardinality)
+                |> List.map (wiccv weightingConstant)
+                |> List.indexedMap (\i -> List.Extra.getAt i)
+                |> List.map (Maybe.withDefault 0)
+
+        minWiccVals : List Float
+        minWiccVals =
+            wiccVals minCycleSaturationForCardinality
+
+        maxWiccVals : List Float
+        maxWiccVals =
+            wiccVals maxCycleSaturationForCardinality
+    in
+    List.map3 CyclicProportionSaturation minWiccVals maxWiccVals (wiccv weightingConstant set)

@@ -14,6 +14,8 @@ import Transformations exposing (Transformation(..), possibleTransformations, tr
 import PcSetBasics exposing (cardinality)
 import PcSetBasics exposing (primeForm)
 import Regex exposing (Regex, Match) 
+import IntervalCycles exposing (CyclicProportionSaturation)
+import Helpers
 
 
 
@@ -46,7 +48,7 @@ init =
     , pitchClasses = []
     , pcSet = PcSet (edoFromInt 12) []
     , edo = edoFromInt 12
-    , weightingConstant = 1.2
+    , weightingConstant = 1.01
     , icToMinimize = 1
     , forteNumber = Nothing
     }
@@ -229,7 +231,7 @@ viewIntervalCycles weightingConstant set =
                 |> List.map (List.map (\s -> "[" ++ s ++ "]"))
                 |> List.map (String.join " ")
     in
-    div [ id "intervac-cycles" ]
+    div [ id "interval-cycles" ]
         [ h3 [] [ text "Interval Cycles" ]
         , p [] [ text "Generic Interval Cycles:" ]
         , ol []
@@ -251,6 +253,44 @@ viewIntervalCycles weightingConstant set =
             [ text "WICCV: "
             , text (wiccvString weightingConstant set)
             ]
+        , viewCPSATV weightingConstant set
+        , viewCycleSaturationDetails weightingConstant set
+        ]
+
+viewCPSATV : Float -> PcSet -> Html Msg
+viewCPSATV weightingConstant set =
+    IntervalCycles.makeCPSATV weightingConstant set
+        |> List.map (\cps -> Helpers.scale cps.minimum cps.maximum cps.value)
+        |> List.map (\n -> n * 100 |> round |> toFloat |> (\x -> x / 100))
+        |> List.map String.fromFloat
+        |> String.join ", "
+        |> (\s -> "CPSATV: <" ++ s ++ ">")
+        |> (\s -> p [] [text s] )
+
+
+{-I don't think we need this-}
+viewCycleSaturationDetails : Float -> PcSet -> Html Msg
+viewCycleSaturationDetails weightingConstant set =
+    let
+        round2 n =
+            n * 100 |> round |> toFloat |> (\x -> x / 100)
+
+        makeLi : CyclicProportionSaturation -> Html Msg
+        makeLi cps =
+            li []
+                [ text "min: "
+                , text (String.fromFloat <| round2 cps.minimum)
+                , text "; max: "
+                , text (String.fromFloat <| round2 cps.maximum) 
+                , text "; val:" 
+                , text (String.fromFloat <| round2 cps.value)
+                ]
+    in
+    div [ id "cycle-saturation" ]
+        [ ol []
+            (IntervalCycles.makeCPSATV weightingConstant set
+                |> List.map makeLi
+            )
         ]
 
 
