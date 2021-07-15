@@ -24,7 +24,12 @@ import Helpers
 
 main : Program () Model Msg
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.element 
+        { init = init
+        , update = update
+        , view = view 
+        , subscriptions = subscriptions
+        }
 
 
 
@@ -42,9 +47,9 @@ type alias Model =
     }
 
 
-init : Model
-init =
-    { userInput = ""
+init : () -> (Model, Cmd Msg)
+init _ =
+    ( { userInput = ""
     , pitchClasses = []
     , pcSet = PcSet (edoFromInt 12) []
     , edo = edoFromInt 12
@@ -52,6 +57,7 @@ init =
     , icToMinimize = 1
     , forteNumber = Nothing
     }
+    , Cmd.none )
 
 
 
@@ -64,11 +70,14 @@ type Msg
     | Calculate
     | Reset
     | UpdateIc String
+    | ClickSetLink String
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        ClickSetLink set ->
+            update (Typing set) { model | userInput = set }
         Typing input ->
             let
                 edo12 : Bool
@@ -138,20 +147,29 @@ update msg model =
                         PcInt.listFromInput model.edo (cleanup input)
                             |> PcSet model.edo
             in
-            { model | userInput = input, pitchClasses = pcs, pcSet = set, forteNumber = ForteNumbers.forteNum set }
+            ( { model | userInput = input, pitchClasses = pcs, pcSet = set, forteNumber = ForteNumbers.forteNum set }
+            , Cmd.none )
 
         UpdateEdo input ->
-            { model | edo = edoFromInt <| Maybe.withDefault 12 <| String.toInt input }
+            ( { model | edo = edoFromInt <| Maybe.withDefault 12 <| String.toInt input }
+            , Cmd.none )
 
         Calculate ->
-            model
+            ( model
+            , Cmd.none )
 
         Reset ->
-            { model | userInput = "", pcSet = PcSet model.edo [], pitchClasses = [] }
+            ( { model | userInput = "", pcSet = PcSet model.edo [], pitchClasses = [] }
+            , Cmd.none )
 
         UpdateIc ic ->
-            { model | icToMinimize = Maybe.withDefault 1 <| String.toInt ic }
+            ( { model | icToMinimize = Maybe.withDefault 1 <| String.toInt ic }
+            , Cmd.none )
 
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none 
 
 
 -- VIEW
@@ -226,12 +244,6 @@ viewSetFacts model =
 viewIntervalCycles : Float -> PcSet -> Html Msg
 viewIntervalCycles weightingConstant set =
     let
-        viewAllCycles : Int -> List String
-        viewAllCycles modulus =
-            List.range 1 (modulus // 2)
-                |> List.map (IntervalCycles.genericIntervalCycle modulus)
-                |> List.map IntervalCycles.print
-
         viewCycleFragmentations : PcSet -> List String
         viewCycleFragmentations pcset =
             IntervalCycles.intervalCycleFragmentations pcset
@@ -243,11 +255,6 @@ viewIntervalCycles weightingConstant set =
     in
     div [ id "interval-cycles" ]
         [ h3 [] [ text "Interval Cycles" ]
-        , p [] [ text "Generic Interval Cycles:" ]
-        , ol []
-            (viewAllCycles (PcSetBasics.setModulus set)
-                |> List.map (\s -> li [] [ text s ])
-            )
         , p []
             [ text "Interval Cycle Fragmentation of "
             , text (setToString set)]
@@ -277,6 +284,18 @@ viewCPSATV weightingConstant set =
         |> (\s -> "CPSATV: <" ++ s ++ ">")
         |> (\s -> p [] [text s] )
 
+
+viewGenericIntervalCycles : Int -> Html Msg
+viewGenericIntervalCycles modulus =
+    div []
+        [ p [] [ text "Generic Interval Cycles:" ]
+        , ol []
+            (List.range 1 (modulus // 2)
+                |> List.map (IntervalCycles.genericIntervalCycle modulus)
+                |> List.map IntervalCycles.print
+                |> List.map (\s -> li [] [ text s ])
+            )
+        ]
 
 {-I don't think we need this-}
 viewCycleSaturationDetails : Float -> PcSet -> Html Msg
@@ -320,7 +339,8 @@ viewCycleOrders model =
 
     in
     div []
-        [ h3 [] [ text "Possible Sets to Minimize or Maximize Interval Classes" ]
+        [ h3 [] [ text "Possible Sets to Minimize or Maximize Unbroken Interval Class Cycles" ]
+        , viewGenericIntervalCycles <| edoToInt model.edo
         , p []
             [ text "IC to minimize/maximize: "
             , input 
@@ -332,19 +352,19 @@ viewCycleOrders model =
                 ]
                 []
             ]
+        , h4 [] [text "Possible Sets to Minimize Interval Class Cyles for a Given Cardinality"]
+        , Html.ol []
+            (List.range 1 (edoToInt model.edo)
+                |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToMinimize i)
+                |> List.map prettifySet
+                |> List.map PcSetBasics.setToString
+                |> List.map (\s -> li [] [text s])
+            )
         , h4 [] [text "Possible Sets to Maximize Interval Class Cyles for a Given Cardinality"]
         , Html.ol []
             ( List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> List.take i maxOrdering)
                 |> List.map (PcSet model.edo)
-                |> List.map prettifySet
-                |> List.map PcSetBasics.setToString
-                |> List.map (\s -> li [] [text s])
-            )
-        , h4 [] [text "Possible Sets to Minimize Interval Class Cyles for a Given Cardinality"]
-        , Html.ol []
-            (List.range 1 (edoToInt model.edo)
-                |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToMinimize i)
                 |> List.map prettifySet
                 |> List.map PcSetBasics.setToString
                 |> List.map (\s -> li [] [text s])
@@ -477,20 +497,24 @@ viewRelatedSets pcSet =
 viewComplement : PcSet -> Html Msg
 viewComplement pcSet =
     let
-        c =
+        complement = 
             PcSetBasics.complement pcSet
 
+        complementString =
+            setToString complement
+
         cpf =
-            PcSetBasics.primeForm c
+            PcSetBasics.primeForm complement
 
     in
     div [ id "complement" ]
         [ p []
             [ text "Complement: "
-            , text (setToString <| c)
+            , Html.a [ Attr.href "#", onClick (ClickSetLink complementString) ] 
+                [ text complementString ]
             , text " = "
             , span []
-                (Transformations.possibleTransformations c cpf
+                (Transformations.possibleTransformations complement cpf
                     |> List.map printTransformation
                     |> List.intersperse (span [] [text " / "])
                 )
@@ -510,7 +534,7 @@ viewZMate pcSet =
             div [ id "z-related-mate" ]
                 [ p []
                     [ text "Z-related pair: "
-                    , text z
+                    , Html.a [Attr.href "#", onClick (ClickSetLink z) ] [text z]
                     ]
                 ]
         Nothing ->
