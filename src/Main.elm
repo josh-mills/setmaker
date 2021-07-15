@@ -43,7 +43,6 @@ type alias Model =
     , edo : Edo
     , weightingConstant : Float
     , icToMinimize : Int
-    , forteNumber : Maybe String
     }
 
 
@@ -53,9 +52,8 @@ init _ =
     , pitchClasses = []
     , pcSet = PcSet (edoFromInt 12) []
     , edo = edoFromInt 12
-    , weightingConstant = 1.01
+    , weightingConstant = 1.2
     , icToMinimize = 1
-    , forteNumber = Nothing
     }
     , Cmd.none )
 
@@ -147,11 +145,19 @@ update msg model =
                         PcInt.listFromInput model.edo (cleanup input)
                             |> PcSet model.edo
             in
-            ( { model | userInput = input, pitchClasses = pcs, pcSet = set, forteNumber = ForteNumbers.forteNum set }
+            ( { model | userInput = input, pitchClasses = pcs, pcSet = set }
             , Cmd.none )
 
         UpdateEdo input ->
-            ( { model | edo = edoFromInt <| Maybe.withDefault 12 <| String.toInt input }
+            let
+                newEdo : Edo
+                newEdo = edoFromInt <| Maybe.withDefault 12 <| String.toInt input
+
+                s : List PcInt
+                s = (\(PcSet _ pcs) -> pcs) model.pcSet
+
+            in
+            ( { model | edo = newEdo, pcSet = PcSet newEdo s}
             , Cmd.none )
 
         Calculate ->
@@ -215,6 +221,10 @@ viewUI model =
 
 viewSetFacts : Model -> Html Msg
 viewSetFacts model =
+    let
+        forteNum : Maybe String
+        forteNum = ForteNumbers.forteNum model.pcSet
+    in
     div [ id "set-facts" ]
         [ h3 [] [ text "Basic Set Properties" ]
         , p []
@@ -224,7 +234,7 @@ viewSetFacts model =
             , text " of "
             , text (printPrimeForm <| PcSetBasics.primeForm model.pcSet)
             , text
-                (case model.forteNumber of
+                (case forteNum of
                     Just s ->
                         ". Forte number: " ++ s
                     Nothing ->
@@ -358,7 +368,11 @@ viewCycleOrders model =
                 |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToMinimize i)
                 |> List.map prettifySet
                 |> List.map PcSetBasics.setToString
-                |> List.map (\s -> li [] [text s])
+                |> List.map (\s -> li [] 
+                    [Html.a [ Attr.href "#", onClick (ClickSetLink s)]
+                        [text s]
+                    ]
+                )
             )
         , h4 [] [text "Possible Sets to Maximize Interval Class Cyles for a Given Cardinality"]
         , Html.ol []
@@ -367,7 +381,11 @@ viewCycleOrders model =
                 |> List.map (PcSet model.edo)
                 |> List.map prettifySet
                 |> List.map PcSetBasics.setToString
-                |> List.map (\s -> li [] [text s])
+                |> List.map (\s -> li [] 
+                    [Html.a [ Attr.href "#", onClick (ClickSetLink s)]
+                        [text s]
+                    ]
+                )
             )
         ]
 
