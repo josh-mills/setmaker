@@ -84,10 +84,20 @@ update msg model =
                 isForteNumber =
                     edo12 && Regex.contains forteNumberRegex input
 
+                cleanup : String -> String
+                cleanup s =
+                    let
+                        charsRegex = 
+                            Maybe.withDefault Regex.never <|
+                                Regex.fromString("[{}()\\[\\]]")
+                    in
+                    Regex.replace charsRegex (\_ -> "") s
+
+
                 pcs : List PitchClass
                 pcs =
                     if edo12 then
-                        PitchClass.listFromInput input
+                        PitchClass.listFromInput <| cleanup input
 
                     else
                         []
@@ -125,7 +135,7 @@ update msg model =
                             |> PcSet model.edo
 
                     else
-                        PcInt.listFromInput model.edo input
+                        PcInt.listFromInput model.edo (cleanup input)
                             |> PcSet model.edo
             in
             { model | userInput = input, pitchClasses = pcs, pcSet = set, forteNumber = ForteNumbers.forteNum set }
