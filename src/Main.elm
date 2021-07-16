@@ -3,20 +3,17 @@ module Main exposing (main)
 import Array exposing (Array)
 import Browser
 import ForteNumbers
+import Helpers
 import Html exposing (Html, button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
 import Html.Attributes as Attr exposing (id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import IntervalCycles exposing (iccvString, maximallySaturatedSets, minimallySaturatedSets, maximumWICCs, minimumWICCs, wiccvString)
+import IntervalCycles exposing (CyclicProportionSaturation, iccvString, maximallySaturatedSets, maximumWICCs, minimallySaturatedSets, minimumWICCs, wiccvString)
 import PcInt exposing (Edo, PcInt, edoFromInt, edoToInt, invertPcInt, listFromInput, pcInt, toString, transposePcInt)
-import PcSetBasics exposing (PcSet(..), icCount, icVector, normalForm, setToString)
+import PcSetBasics exposing (PcSet(..), cardinality, icCount, icVector, normalForm, primeForm, setToString)
 import PitchClass exposing (PitchClass, listFromInput, toInt)
-import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
-import PcSetBasics exposing (cardinality)
-import PcSetBasics exposing (primeForm)
-import Regex exposing (Regex, Match) 
+import Regex exposing (Match, Regex)
 import Round
-import IntervalCycles exposing (CyclicProportionSaturation)
-import Helpers
+import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
 
 
 
@@ -25,10 +22,10 @@ import Helpers
 
 main : Program () Model Msg
 main =
-    Browser.element 
+    Browser.element
         { init = init
         , update = update
-        , view = view 
+        , view = view
         , subscriptions = subscriptions
         }
 
@@ -47,16 +44,17 @@ type alias Model =
     }
 
 
-init : () -> (Model, Cmd Msg)
+init : () -> ( Model, Cmd Msg )
 init _ =
     ( { userInput = ""
-    , pitchClasses = []
-    , pcSet = PcSet (edoFromInt 12) []
-    , edo = edoFromInt 12
-    , weightingConstant = 1.2
-    , icToOptimize = 1
-    }
-    , Cmd.none )
+      , pitchClasses = []
+      , pcSet = PcSet (edoFromInt 12) []
+      , edo = edoFromInt 12
+      , weightingConstant = 1.2
+      , icToOptimize = 1
+      }
+    , Cmd.none
+    )
 
 
 
@@ -72,11 +70,12 @@ type Msg
     | ClickSetLink String
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ClickSetLink set ->
             update (Typing set) { model | userInput = set }
+
         Typing input ->
             let
                 edo12 : Bool
@@ -95,12 +94,11 @@ update msg model =
                 cleanup : String -> String
                 cleanup s =
                     let
-                        charsRegex = 
+                        charsRegex =
                             Maybe.withDefault Regex.never <|
-                                Regex.fromString("[{}()\\[\\]]")
+                                Regex.fromString "[{}()\\[\\]]"
                     in
                     Regex.replace charsRegex (\_ -> "") s
-
 
                 pcs : List PitchClass
                 pcs =
@@ -115,13 +113,14 @@ update msg model =
                     if isForteNumber then
                         let
                             matches : List Int
-                            matches = Regex.find forteNumberRegex input
-                                |> List.head
-                                |> Maybe.map .submatches
-                                |> Maybe.map (List.filterMap identity)
-                                |> Maybe.map (List.filterMap String.toInt)
-                                |> Maybe.map (List.take 2)
-                                |> Maybe.withDefault []
+                            matches =
+                                Regex.find forteNumberRegex input
+                                    |> List.head
+                                    |> Maybe.map .submatches
+                                    |> Maybe.map (List.filterMap identity)
+                                    |> Maybe.map (List.filterMap String.toInt)
+                                    |> Maybe.map (List.take 2)
+                                    |> Maybe.withDefault []
 
                             card : Int
                             card =
@@ -136,6 +135,7 @@ update msg model =
                         in
                         Maybe.withDefault (PcSet model.edo []) <|
                             ForteNumbers.primeFormForForteNumber card catNum
+
                     else if edo12 then
                         pcs
                             |> List.map PitchClass.toInt
@@ -147,36 +147,43 @@ update msg model =
                             |> PcSet model.edo
             in
             ( { model | userInput = input, pitchClasses = pcs, pcSet = set }
-            , Cmd.none )
+            , Cmd.none
+            )
 
         UpdateEdo input ->
             let
                 newEdo : Edo
-                newEdo = edoFromInt <| Maybe.withDefault 12 <| String.toInt input
+                newEdo =
+                    edoFromInt <| Maybe.withDefault 12 <| String.toInt input
 
                 s : List PcInt
-                s = (\(PcSet _ pcs) -> pcs) model.pcSet
-
+                s =
+                    (\(PcSet _ pcs) -> pcs) model.pcSet
             in
-            ( { model | edo = newEdo, pcSet = PcSet newEdo s}
-            , Cmd.none )
+            ( { model | edo = newEdo, pcSet = PcSet newEdo s }
+            , Cmd.none
+            )
 
         Calculate ->
             ( model
-            , Cmd.none )
+            , Cmd.none
+            )
 
         Reset ->
             ( { model | userInput = "", pcSet = PcSet model.edo [], pitchClasses = [] }
-            , Cmd.none )
+            , Cmd.none
+            )
 
         UpdateIc ic ->
             ( { model | icToOptimize = Maybe.withDefault 1 <| String.toInt ic }
-            , Cmd.none )
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none 
+    Sub.none
+
 
 
 -- VIEW
@@ -190,6 +197,7 @@ view model =
         , viewRelatedSets model.pcSet
         , viewIntervalCycles model.weightingConstant model.pcSet
         , viewCycleOrders model
+
         -- , viewMinIcOccurences model.edo
         -- , viewMaxIcOccurences model.edo
         -- , viewMinWICCs model.edo model.weightingConstant
@@ -208,7 +216,8 @@ viewUI model =
         , p []
             [ if edoToInt model.edo == 12 then
                 text "Pitch classes or Forte number: "
-            else
+
+              else
                 text "Pitch classes: "
             , input [ placeholder "type set...", value model.userInput, onInput Typing ] []
             ]
@@ -224,7 +233,8 @@ viewSetFacts : Model -> Html Msg
 viewSetFacts model =
     let
         forteNum : Maybe String
-        forteNum = ForteNumbers.forteNum model.pcSet
+        forteNum =
+            ForteNumbers.forteNum model.pcSet
     in
     div [ id "set-facts" ]
         [ h3 [] [ text "Basic Set Properties" ]
@@ -238,13 +248,15 @@ viewSetFacts model =
                 (case forteNum of
                     Just s ->
                         ". Forte number: " ++ s
+
                     Nothing ->
                         ""
                 )
             ]
         , p []
             [ text "Cardinality: "
-            , text (cardinality model.pcSet |> String.fromInt)]
+            , text (cardinality model.pcSet |> String.fromInt)
+            ]
         , p []
             [ text "IC vector: "
             , text (printIcVector model)
@@ -268,7 +280,8 @@ viewIntervalCycles weightingConstant set =
         [ h3 [] [ text "Interval Cycles" ]
         , p []
             [ text "Interval Cycle Fragmentation of "
-            , text (setToString set)]
+            , text (setToString set)
+            ]
         , ol []
             (viewCycleFragmentations set
                 |> List.map (\s -> li [] [ text s ])
@@ -282,17 +295,20 @@ viewIntervalCycles weightingConstant set =
             , text (wiccvString weightingConstant set)
             ]
         , viewCPSATV weightingConstant set
+
         -- , viewCycleSaturationDetails weightingConstant set
         ]
+
 
 viewCPSATV : Float -> PcSet -> Html Msg
 viewCPSATV weightingConstant set =
     let
         cpsList : List CyclicProportionSaturation
-        cpsList = IntervalCycles.makeCPSATV weightingConstant set
+        cpsList =
+            IntervalCycles.makeCPSATV weightingConstant set
 
         cpsatv : String
-        cpsatv = 
+        cpsatv =
             cpsList
                 |> List.map (\cps -> Helpers.scale cps.minimum cps.maximum cps.value)
                 |> List.map (Round.round 2)
@@ -302,11 +318,13 @@ viewCPSATV weightingConstant set =
         csatvA : String
         csatvA =
             cpsList
-                |> List.map (\cps -> 
-                    if Helpers.scale cps.minimum cps.maximum cps.value >= 0.5 then
-                        "max-" ++ (Round.round 2 <| cps.maximum - cps.value)
-                    else
-                        "min+" ++ (Round.round 2 <| cps.value - cps.minimum)
+                |> List.map
+                    (\cps ->
+                        if Helpers.scale cps.minimum cps.maximum cps.value >= 0.5 then
+                            "max-" ++ (Round.round 2 <| cps.maximum - cps.value)
+
+                        else
+                            "min+" ++ (Round.round 2 <| cps.value - cps.minimum)
                     )
                 |> String.join ", "
                 |> (\s -> "<" ++ s ++ ">")
@@ -314,31 +332,35 @@ viewCPSATV weightingConstant set =
         csatvB : String
         csatvB =
             cpsList
-                |> List.map (\cps -> 
-                    if Helpers.scale cps.minimum cps.maximum cps.value < 0.5 then
-                        "max-" ++ (Round.round 2 <| cps.maximum - cps.value)
-                    else
-                        "min+" ++ (Round.round 2 <| cps.value - cps.minimum)
+                |> List.map
+                    (\cps ->
+                        if Helpers.scale cps.minimum cps.maximum cps.value < 0.5 then
+                            "max-" ++ (Round.round 2 <| cps.maximum - cps.value)
+
+                        else
+                            "min+" ++ (Round.round 2 <| cps.value - cps.minimum)
                     )
                 |> String.join ", "
                 |> (\s -> "<" ++ s ++ ">")
     in
-    div [] 
+    div []
         [ p [] [ text cpsatv ]
         , p []
-            [ span [] 
+            [ span []
                 [ text "CSATV"
-                , Html.sub [] [text "A"]
+                , Html.sub [] [ text "A" ]
                 , text ": "
                 ]
-            , text csatvA ]
+            , text csatvA
+            ]
         , p []
-            [ span [] 
+            [ span []
                 [ text "CSATV"
-                , Html.sub [] [text "B"]
+                , Html.sub [] [ text "B" ]
                 , text ": "
                 ]
-            , text csatvB ]
+            , text csatvB
+            ]
         ]
 
 
@@ -354,7 +376,11 @@ viewGenericIntervalCycles modulus =
             )
         ]
 
-{-I don't think we need this-}
+
+
+{- I don't think we need this -}
+
+
 viewCycleSaturationDetails : Float -> PcSet -> Html Msg
 viewCycleSaturationDetails weightingConstant set =
     let
@@ -367,8 +393,8 @@ viewCycleSaturationDetails weightingConstant set =
                 [ text "min: "
                 , text (String.fromFloat <| round2 cps.minimum)
                 , text "; max: "
-                , text (String.fromFloat <| round2 cps.maximum) 
-                , text "; val:" 
+                , text (String.fromFloat <| round2 cps.maximum)
+                , text "; val:"
                 , text (String.fromFloat <| round2 cps.value)
                 ]
     in
@@ -386,55 +412,59 @@ viewCycleOrders model =
         prettifySet : PcSet -> PcSet
         prettifySet (PcSet edo pcs) =
             List.sortBy PcInt.pcIntToInt pcs
-                |> PcSetBasics.transposeToZero edo 
+                |> PcSetBasics.transposeToZero edo
                 |> PcSet edo
 
         maxOrdering : List PcInt
-        maxOrdering = 
+        maxOrdering =
             IntervalCycles.orderToMaximizeIC (edoToInt model.edo) model.icToOptimize
                 |> List.map (pcInt model.edo)
 
-        ic = String.fromInt model.icToOptimize
-
+        ic =
+            String.fromInt model.icToOptimize
     in
     div []
         [ h3 [] [ text "Possible Sets to Minimize or Maximize Unbroken Interval Class Cycles" ]
         , viewGenericIntervalCycles <| edoToInt model.edo
         , p []
             [ text "IC to minimize/maximize: "
-            , input 
+            , input
                 [ type_ "number"
                 , Attr.min "1"
                 , Attr.max (String.fromInt <| (\i -> i // 2) <| edoToInt model.edo)
                 , value ic
-                , onInput UpdateIc 
+                , onInput UpdateIc
                 ]
                 []
             ]
-        , h4 [] [text ("Possible Sets to Minimize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
+        , h4 [] [ text ("Possible Sets to Minimize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
         , Html.ol []
             (List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToOptimize i)
                 |> List.map prettifySet
                 |> List.map PcSetBasics.setToString
-                |> List.map (\s -> li [] 
-                    [Html.a [ Attr.href "#", onClick (ClickSetLink s)]
-                        [text s]
-                    ]
-                )
+                |> List.map
+                    (\s ->
+                        li []
+                            [ Html.a [ Attr.href "#", onClick (ClickSetLink s) ]
+                                [ text s ]
+                            ]
+                    )
             )
-        , h4 [] [text ("Possible Sets to Maximize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
+        , h4 [] [ text ("Possible Sets to Maximize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
         , Html.ol []
-            ( List.range 1 (edoToInt model.edo)
+            (List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> List.take i maxOrdering)
                 |> List.map (PcSet model.edo)
                 |> List.map prettifySet
                 |> List.map PcSetBasics.setToString
-                |> List.map (\s -> li [] 
-                    [Html.a [ Attr.href "#", onClick (ClickSetLink s)]
-                        [text s]
-                    ]
-                )
+                |> List.map
+                    (\s ->
+                        li []
+                            [ Html.a [ Attr.href "#", onClick (ClickSetLink s) ]
+                                [ text s ]
+                            ]
+                    )
             )
         ]
 
@@ -499,29 +529,30 @@ viewMinWICCs edo weightingConstant =
         makeTR vals =
             Html.tr []
                 (List.map (\x -> String.fromFloat <| round2 x) vals
-                    |> List.map (\s -> Html.td [] [text s])
+                    |> List.map (\s -> Html.td [] [ text s ])
                 )
 
         makeTRs : Array (Array Float) -> List (Html Msg)
         makeTRs a =
-            Array.map (Array.toList) a
+            Array.map Array.toList a
                 |> Array.map makeTR
                 |> Array.toList
     in
     div []
-        [ h3 [] [text "minimum WICC values"]
+        [ h3 [] [ text "minimum WICC values" ]
         , Html.table []
-            [ Html.thead [] 
+            [ Html.thead []
                 (List.range 0 (edoToInt edo)
                     |> List.map String.fromInt
-                    |> List.map (\s -> Html.th [] [text s])
+                    |> List.map (\s -> Html.th [] [ text s ])
                 )
             , Html.tbody []
-                ( minimumWICCs edo weightingConstant
-                        |> makeTRs
-                    )
+                (minimumWICCs edo weightingConstant
+                    |> makeTRs
+                )
             ]
         ]
+
 
 viewMaxWICCs edo weightingConstant =
     let
@@ -532,23 +563,23 @@ viewMaxWICCs edo weightingConstant =
         makeTR vals =
             Html.tr []
                 (List.map (\x -> String.fromFloat <| round2 x) vals
-                    |> List.map (\s -> Html.td [] [text s])
+                    |> List.map (\s -> Html.td [] [ text s ])
                 )
 
         makeTRs : Array (Array Float) -> List (Html Msg)
         makeTRs a =
-            Array.map (Array.toList) a
+            Array.map Array.toList a
                 |> Array.map makeTR
                 |> Array.toList
     in
     div []
-        [ h3 [] [text "maximum WICC values"]
+        [ h3 [] [ text "maximum WICC values" ]
         , Html.table []
             [ Html.thead [] []
             , Html.tbody []
-                ( maximumWICCs edo weightingConstant
-                        |> makeTRs
-                    )
+                (maximumWICCs edo weightingConstant
+                    |> makeTRs
+                )
             ]
         ]
 
@@ -561,10 +592,11 @@ viewRelatedSets pcSet =
         , viewZMate pcSet
         ]
 
+
 viewComplement : PcSet -> Html Msg
 viewComplement pcSet =
     let
-        complement = 
+        complement =
             PcSetBasics.complement pcSet
 
         complementString =
@@ -572,18 +604,17 @@ viewComplement pcSet =
 
         cpf =
             PcSetBasics.primeForm complement
-
     in
     div [ id "complement" ]
         [ p []
             [ text "Complement: "
-            , Html.a [ Attr.href "#", onClick (ClickSetLink complementString) ] 
+            , Html.a [ Attr.href "#", onClick (ClickSetLink complementString) ]
                 [ text complementString ]
             , text " = "
             , span []
                 (Transformations.possibleTransformations complement cpf
                     |> List.map printTransformation
-                    |> List.intersperse (span [] [text " / "])
+                    |> List.intersperse (span [] [ text " / " ])
                 )
             , text " of "
             , text (printPrimeForm cpf)
@@ -594,16 +625,18 @@ viewComplement pcSet =
 viewZMate : PcSet -> Html Msg
 viewZMate pcSet =
     let
-        zMate = ForteNumbers.zRelatedNum pcSet
+        zMate =
+            ForteNumbers.zRelatedNum pcSet
     in
     case zMate of
         Just z ->
             div [ id "z-related-mate" ]
                 [ p []
                     [ text "Z-related pair: "
-                    , Html.a [Attr.href "#", onClick (ClickSetLink z) ] [text z]
+                    , Html.a [ Attr.href "#", onClick (ClickSetLink z) ] [ text z ]
                     ]
                 ]
+
         Nothing ->
             div [ id "z-related-mate" ] []
 
@@ -629,7 +662,7 @@ listTransformationsOfPrimeForm set =
     span []
         (possibleTransformations (PcSetBasics.primeForm set) set
             |> List.map printTransformation
-            |> List.intersperse (span [] [text " / "])
+            |> List.intersperse (span [] [ text " / " ])
         )
 
 

@@ -63,12 +63,12 @@ emptySet =
     [ ( 0, ( 0, 0, 0 ) ) ]
 
 
-monochord : List (Int, (Int, Int, Int))
+monochord : List ( Int, ( Int, Int, Int ) )
 monochord =
     [ ( 1, ( 1, 0, 1 ) ) ]
 
 
-dyads : List (Int, (Int, Int, Int))
+dyads : List ( Int, ( Int, Int, Int ) )
 dyads =
     [ {- [ 2-note sets]    [  2] -} ( 3, ( 1, 0, 5 ) )
     , {- [  3] -} ( 5, ( 2, 0, 2 ) )
@@ -79,7 +79,7 @@ dyads =
     ]
 
 
-trichords : List (Int, (Int, Int, Int))
+trichords : List ( Int, ( Int, Int, Int ) )
 trichords =
     [ {- [3-note sets] [ 8] -} ( 7, ( 1, 0, 9 ) )
     , ( 11, ( 2, 0, 7 ) )
@@ -96,7 +96,7 @@ trichords =
     ]
 
 
-tetrachords : List (Int, (Int, Int, Int))
+tetrachords : List ( Int, ( Int, Int, Int ) )
 tetrachords =
     [ {- [ 4-note sets] [ 20] -} ( 15, ( 1, 0, 23 ) )
     , ( 23, ( 2, 0, 22 ) )
@@ -130,7 +130,7 @@ tetrachords =
     ]
 
 
-pentachords : List (Int, (Int, Int, Int))
+pentachords : List ( Int, ( Int, Int, Int ) )
 pentachords =
     [ {- [ 5-note sets] [ 49] -} ( 31, ( 1, 0, 35 ) )
     , ( 47, ( 2, 0, 23 ) )
@@ -173,7 +173,7 @@ pentachords =
     ]
 
 
-hexachords : List (Int, (Int, Int, Int))
+hexachords : List ( Int, ( Int, Int, Int ) )
 hexachords =
     [ {- [ 6-note sets] [ 87] -} ( 63, ( 1, 0, 32 ) )
     , ( 95, ( 2, 0, 33 ) )
@@ -228,7 +228,7 @@ hexachords =
     ]
 
 
-heptachords : List (Int, (Int, Int, Int))
+heptachords : List ( Int, ( Int, Int, Int ) )
 heptachords =
     [ {- [ 7-note sets] [137] -} ( 127, ( 1, 0, 35 ) )
     , ( 191, ( 2, 0, 23 ) )
@@ -271,7 +271,7 @@ heptachords =
     ]
 
 
-octochords : List (Int, (Int, Int, Int))
+octochords : List ( Int, ( Int, Int, Int ) )
 octochords =
     [ {- [ 8-note sets] [175] -} ( 255, ( 1, 0, 23 ) )
     , ( 383, ( 2, 0, 22 ) )
@@ -305,7 +305,7 @@ octochords =
     ]
 
 
-enneachords : List (Int, (Int, Int, Int))
+enneachords : List ( Int, ( Int, Int, Int ) )
 enneachords =
     [ {- [ 9-note sets] [204] -} ( 511, ( 1, 0, 9 ) )
     , ( 767, ( 2, 0, 7 ) )
@@ -322,7 +322,7 @@ enneachords =
     ]
 
 
-decachords : List (Int, (Int, Int, Int))
+decachords : List ( Int, ( Int, Int, Int ) )
 decachords =
     [ {- [10-note sets] [216] -} ( 1023, ( 1, 0, 5 ) )
     , ( 1535, ( 2, 0, 2 ) )
@@ -333,12 +333,12 @@ decachords =
     ]
 
 
-hendecachord : List (Int, (Int, Int, Int))
+hendecachord : List ( Int, ( Int, Int, Int ) )
 hendecachord =
     [ {- [11-note sets] [222] -} ( 2047, ( 1, 0, 1 ) ) ]
 
 
-dodecachord : List (Int, (Int, Int, Int))
+dodecachord : List ( Int, ( Int, Int, Int ) )
 dodecachord =
     [ {- [12-note sets] [223] -} ( 4095, ( 1, 0, 1 ) )
     ]

@@ -77,7 +77,6 @@ intervalCycleFragmentations pcSet =
             )
 
 
-
 cycleSeg : IntervalCycleSet -> List Int
 cycleSeg icSet =
     let
@@ -149,7 +148,7 @@ weight k n =
         0
 
     else
-        k / (k - 1) * (k ^ (toFloat n) - 1)
+        k / (k - 1) * (k ^ toFloat n - 1)
 
 
 wiccv : Float -> PcSet -> List Float
