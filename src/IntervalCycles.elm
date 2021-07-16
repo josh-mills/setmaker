@@ -7,6 +7,7 @@ import Html exposing (a)
 import List.Extra
 import PcInt exposing (Edo, PcInt, edoToInt, pcInt)
 import PcSetBasics exposing (PcSet(..), cardinality)
+import Round
 import Set exposing (Set(..))
 
 
@@ -142,22 +143,26 @@ weightRecursive k n =
         k * (1 + weightRecursive k (n - 1))
 
 
+weight : Float -> Int -> Float
+weight k n =
+    if n < 1 then
+        0
+
+    else
+        k / (k - 1) * (k ^ (toFloat n) - 1)
+
+
 wiccv : Float -> PcSet -> List Float
 wiccv k pcSet =
     iccv pcSet
-        |> List.map (List.map (weightRecursive k))
+        |> List.map (List.map (weight k))
         |> List.map List.sum
 
 
 wiccvString : Float -> PcSet -> String
 wiccvString k set =
-    let
-        round2 n =
-            n * 100 |> round |> toFloat |> (\x -> x / 100)
-    in
     wiccv k set
-        |> List.map round2
-        |> List.map String.fromFloat
+        |> List.map (Round.round 2)
         |> String.join ", "
         |> (\s -> "<" ++ s ++ ">")
 

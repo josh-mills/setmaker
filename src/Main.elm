@@ -14,6 +14,7 @@ import Transformations exposing (Transformation(..), possibleTransformations, tr
 import PcSetBasics exposing (cardinality)
 import PcSetBasics exposing (primeForm)
 import Regex exposing (Regex, Match) 
+import Round
 import IntervalCycles exposing (CyclicProportionSaturation)
 import Helpers
 
@@ -42,7 +43,7 @@ type alias Model =
     , pcSet : PcSet
     , edo : Edo
     , weightingConstant : Float
-    , icToMinimize : Int
+    , icToOptimize : Int
     }
 
 
@@ -53,7 +54,7 @@ init _ =
     , pcSet = PcSet (edoFromInt 12) []
     , edo = edoFromInt 12
     , weightingConstant = 1.2
-    , icToMinimize = 1
+    , icToOptimize = 1
     }
     , Cmd.none )
 
@@ -169,7 +170,7 @@ update msg model =
             , Cmd.none )
 
         UpdateIc ic ->
-            ( { model | icToMinimize = Maybe.withDefault 1 <| String.toInt ic }
+            ( { model | icToOptimize = Maybe.withDefault 1 <| String.toInt ic }
             , Cmd.none )
 
 
@@ -281,18 +282,64 @@ viewIntervalCycles weightingConstant set =
             , text (wiccvString weightingConstant set)
             ]
         , viewCPSATV weightingConstant set
-        , viewCycleSaturationDetails weightingConstant set
+        -- , viewCycleSaturationDetails weightingConstant set
         ]
 
 viewCPSATV : Float -> PcSet -> Html Msg
 viewCPSATV weightingConstant set =
-    IntervalCycles.makeCPSATV weightingConstant set
-        |> List.map (\cps -> Helpers.scale cps.minimum cps.maximum cps.value)
-        |> List.map (\n -> n * 100 |> round |> toFloat |> (\x -> x / 100))
-        |> List.map String.fromFloat
-        |> String.join ", "
-        |> (\s -> "CPSATV: <" ++ s ++ ">")
-        |> (\s -> p [] [text s] )
+    let
+        cpsList : List CyclicProportionSaturation
+        cpsList = IntervalCycles.makeCPSATV weightingConstant set
+
+        cpsatv : String
+        cpsatv = 
+            cpsList
+                |> List.map (\cps -> Helpers.scale cps.minimum cps.maximum cps.value)
+                |> List.map (Round.round 2)
+                |> String.join ", "
+                |> (\s -> "CPSATV: <" ++ s ++ ">")
+
+        csatvA : String
+        csatvA =
+            cpsList
+                |> List.map (\cps -> 
+                    if Helpers.scale cps.minimum cps.maximum cps.value >= 0.5 then
+                        "max-" ++ (Round.round 2 <| cps.maximum - cps.value)
+                    else
+                        "min+" ++ (Round.round 2 <| cps.value - cps.minimum)
+                    )
+                |> String.join ", "
+                |> (\s -> "<" ++ s ++ ">")
+
+        csatvB : String
+        csatvB =
+            cpsList
+                |> List.map (\cps -> 
+                    if Helpers.scale cps.minimum cps.maximum cps.value < 0.5 then
+                        "max-" ++ (Round.round 2 <| cps.maximum - cps.value)
+                    else
+                        "min+" ++ (Round.round 2 <| cps.value - cps.minimum)
+                    )
+                |> String.join ", "
+                |> (\s -> "<" ++ s ++ ">")
+    in
+    div [] 
+        [ p [] [ text cpsatv ]
+        , p []
+            [ span [] 
+                [ text "CSATV"
+                , Html.sub [] [text "A"]
+                , text ": "
+                ]
+            , text csatvA ]
+        , p []
+            [ span [] 
+                [ text "CSATV"
+                , Html.sub [] [text "B"]
+                , text ": "
+                ]
+            , text csatvB ]
+        ]
 
 
 viewGenericIntervalCycles : Int -> Html Msg
@@ -344,8 +391,10 @@ viewCycleOrders model =
 
         maxOrdering : List PcInt
         maxOrdering = 
-            IntervalCycles.orderToMaximizeIC (edoToInt model.edo) model.icToMinimize
+            IntervalCycles.orderToMaximizeIC (edoToInt model.edo) model.icToOptimize
                 |> List.map (pcInt model.edo)
+
+        ic = String.fromInt model.icToOptimize
 
     in
     div []
@@ -357,15 +406,15 @@ viewCycleOrders model =
                 [ type_ "number"
                 , Attr.min "1"
                 , Attr.max (String.fromInt <| (\i -> i // 2) <| edoToInt model.edo)
-                , value (String.fromInt model.icToMinimize)
+                , value ic
                 , onInput UpdateIc 
                 ]
                 []
             ]
-        , h4 [] [text "Possible Sets to Minimize Interval Class Cyles for a Given Cardinality"]
+        , h4 [] [text ("Possible Sets to Minimize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
         , Html.ol []
             (List.range 1 (edoToInt model.edo)
-                |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToMinimize i)
+                |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToOptimize i)
                 |> List.map prettifySet
                 |> List.map PcSetBasics.setToString
                 |> List.map (\s -> li [] 
@@ -374,7 +423,7 @@ viewCycleOrders model =
                     ]
                 )
             )
-        , h4 [] [text "Possible Sets to Maximize Interval Class Cyles for a Given Cardinality"]
+        , h4 [] [text ("Possible Sets to Maximize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
         , Html.ol []
             ( List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> List.take i maxOrdering)
@@ -537,7 +586,7 @@ viewComplement pcSet =
                     |> List.intersperse (span [] [text " / "])
                 )
             , text " of "
-            , text (PcSetBasics.setToString cpf)
+            , text (printPrimeForm cpf)
             ]
         ]
 
