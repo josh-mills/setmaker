@@ -1,4 +1,4 @@
-module PcSetBasics exposing (PcSet(..), aggregate, cardinality, comparePcInts, complement, icCount, icVector, invertSet, normalForm, primeForm, setInts, setModulus, setToString, transposeSet, transposeToZero)
+module PcSetBasics exposing (PcSet(..), aggregate, cardinality, comparePcInts, complement, icCount, icVector, invertSet, multiplySet, normalForm, primeForm, setInts, setModulus, setToString, transposeSet, transposeToZero)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
@@ -6,6 +6,7 @@ import Helpers exposing (compareLists, rotationalArrays)
 import List.Extra
 import PcInt exposing (Edo, PcInt, edoToInt, intervalClass, pcIntToInt)
 import Set exposing (Set)
+import PcInt exposing (pcInt)
 
 
 {-| Basic analysis and transformations of pitch class sets
@@ -200,6 +201,15 @@ invertSet : Int -> PcSet -> PcSet
 invertSet index (PcSet edo pcs) =
     List.map (PcInt.invertPcInt edo index) pcs
         |> List.reverse
+        |> PcSet edo
+
+
+multiplySet : Int -> PcSet -> PcSet
+multiplySet index (PcSet edo pcs) =
+    List.map pcIntToInt pcs
+        |> List.map ((*) index)
+        |> List.map (pcInt edo)
+        |> List.sortBy pcIntToInt
         |> PcSet edo
 
 

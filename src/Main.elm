@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Arithmetic
 import Array exposing (Array)
 import Browser
 import ForteNumbers
@@ -13,6 +14,7 @@ import PcSetBasics exposing (PcSet(..), cardinality, icCount, icVector, normalFo
 import PitchClass exposing (PitchClass, listFromInput, toInt)
 import Regex exposing (Match, Regex)
 import Round
+import Set
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
 
 
@@ -254,11 +256,11 @@ viewSetFacts model =
                 )
             ]
         , p []
-            [ text "Cardinality: "
+            [ text "Set Cardinality: "
             , text (cardinality model.pcSet |> String.fromInt)
             ]
         , p []
-            [ text "IC vector: "
+            [ text "Interval Class vector: "
             , text (printIcVector model)
             ]
         ]
@@ -287,11 +289,11 @@ viewIntervalCycles weightingConstant set =
                 |> List.map (\s -> li [] [ text s ])
             )
         , p []
-            [ text "ICCV: "
+            [ text "IC Cycle Vector: "
             , text (iccvString set)
             ]
         , p []
-            [ text "WICCV: "
+            [ text "Weighted IC Cycle Vector: "
             , text (wiccvString weightingConstant set)
             ]
         , viewCPSATV weightingConstant set
@@ -313,7 +315,7 @@ viewCPSATV weightingConstant set =
                 |> List.map (\cps -> Helpers.scale cps.minimum cps.maximum cps.value)
                 |> List.map (Round.round 2)
                 |> String.join ", "
-                |> (\s -> "CPSATV: <" ++ s ++ ">")
+                |> (\s -> "Cyclic Proportion Saturation Vector: <" ++ s ++ ">")
 
         csatvA : String
         csatvA =
@@ -347,7 +349,7 @@ viewCPSATV weightingConstant set =
         [ p [] [ text cpsatv ]
         , p []
             [ span []
-                [ text "CSATV"
+                [ text "CycSatVec"
                 , Html.sub [] [ text "A" ]
                 , text ": "
                 ]
@@ -355,7 +357,7 @@ viewCPSATV weightingConstant set =
             ]
         , p []
             [ span []
-                [ text "CSATV"
+                [ text "CycSatVec"
                 , Html.sub [] [ text "B" ]
                 , text ": "
                 ]
@@ -590,6 +592,7 @@ viewRelatedSets pcSet =
         [ h3 [] [ text "Related Sets" ]
         , viewComplement pcSet
         , viewZMate pcSet
+        , viewMSets pcSet
         ]
 
 
@@ -639,6 +642,46 @@ viewZMate pcSet =
 
         Nothing ->
             div [ id "z-related-mate" ] []
+
+
+viewMSets : PcSet -> Html Msg
+viewMSets pcSet =
+    let
+        n = 
+            PcSetBasics.setModulus pcSet
+
+        coprimes = 
+            List.range 2 (n-1)
+            |> List.filter (Arithmetic.isCoprimeTo n)
+
+        makeLi : Int -> Html Msg
+        makeLi i =
+            let
+                mSet = PcSetBasics.multiplySet i pcSet
+
+                set = PcSetBasics.setToString mSet
+                
+                mSetPF = PcSetBasics.primeForm mSet
+            in
+            li []
+                [ span [] [text "M", Html.sub [] [text (String.fromInt i)], text ": "]
+                , Html.a [ Attr.href "#", onClick (ClickSetLink set)] [text set]
+                , text " = "
+                , span []
+                    (Transformations.possibleTransformations mSet mSetPF
+                        |> List.map printTransformation
+                        |> List.intersperse (span [] [ text " / " ])
+                    )
+                , text " of "
+                , text (printPrimeForm mSetPF)
+                ]
+
+    in
+    div [ id "M-related-sets" ]
+        [ p [] [ text "M-related sets:"]
+        , ul []
+            (List.map makeLi coprimes)
+        ]
 
 
 printIcVector : Model -> String

@@ -8153,7 +8153,7 @@ var $author$project$Main$viewCPSATV = F2(
 	function (weightingConstant, set) {
 		var cpsList = A2($author$project$IntervalCycles$makeCPSATV, weightingConstant, set);
 		var cpsatv = function (s) {
-			return 'CPSATV: <' + (s + '>');
+			return 'Cyclic Proportion Saturation Vector: <' + (s + '>');
 		}(
 			A2(
 				$elm$core$String$join,
@@ -8213,7 +8213,7 @@ var $author$project$Main$viewCPSATV = F2(
 							_List_Nil,
 							_List_fromArray(
 								[
-									$elm$html$Html$text('CSATV'),
+									$elm$html$Html$text('CycSatVec'),
 									A2(
 									$elm$html$Html$sub,
 									_List_Nil,
@@ -8235,7 +8235,7 @@ var $author$project$Main$viewCPSATV = F2(
 							_List_Nil,
 							_List_fromArray(
 								[
-									$elm$html$Html$text('CSATV'),
+									$elm$html$Html$text('CycSatVec'),
 									A2(
 									$elm$html$Html$sub,
 									_List_Nil,
@@ -8334,7 +8334,7 @@ var $author$project$Main$viewIntervalCycles = F2(
 					_List_Nil,
 					_List_fromArray(
 						[
-							$elm$html$Html$text('ICCV: '),
+							$elm$html$Html$text('IC Cycle Vector: '),
 							$elm$html$Html$text(
 							$author$project$IntervalCycles$iccvString(set))
 						])),
@@ -8343,7 +8343,7 @@ var $author$project$Main$viewIntervalCycles = F2(
 					_List_Nil,
 					_List_fromArray(
 						[
-							$elm$html$Html$text('WICCV: '),
+							$elm$html$Html$text('Weighted IC Cycle Vector: '),
 							$elm$html$Html$text(
 							A2($author$project$IntervalCycles$wiccvString, weightingConstant, set))
 						])),
@@ -9227,6 +9227,115 @@ var $author$project$Main$viewComplement = function (pcSet) {
 					]))
 			]));
 };
+var $lynn$elm_arithmetic$Arithmetic$isCoprimeTo = F2(
+	function (a, b) {
+		return A2($lynn$elm_arithmetic$Arithmetic$gcd, a, b) === 1;
+	});
+var $author$project$PcSetBasics$multiplySet = F2(
+	function (index, _v0) {
+		var edo = _v0.a;
+		var pcs = _v0.b;
+		return A2(
+			$author$project$PcSetBasics$PcSet,
+			edo,
+			A2(
+				$elm$core$List$sortBy,
+				$author$project$PcInt$pcIntToInt,
+				A2(
+					$elm$core$List$map,
+					$author$project$PcInt$pcInt(edo),
+					A2(
+						$elm$core$List$map,
+						$elm$core$Basics$mul(index),
+						A2($elm$core$List$map, $author$project$PcInt$pcIntToInt, pcs)))));
+	});
+var $elm$html$Html$ul = _VirtualDom_node('ul');
+var $author$project$Main$viewMSets = function (pcSet) {
+	var n = $author$project$PcSetBasics$setModulus(pcSet);
+	var makeLi = function (i) {
+		var mSet = A2($author$project$PcSetBasics$multiplySet, i, pcSet);
+		var mSetPF = $author$project$PcSetBasics$primeForm(mSet);
+		var set = $author$project$PcSetBasics$setToString(mSet);
+		return A2(
+			$elm$html$Html$li,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text('M'),
+							A2(
+							$elm$html$Html$sub,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(i))
+								])),
+							$elm$html$Html$text(': ')
+						])),
+					A2(
+					$elm$html$Html$a,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$href('#'),
+							$elm$html$Html$Events$onClick(
+							$author$project$Main$ClickSetLink(set))
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(set)
+						])),
+					$elm$html$Html$text(' = '),
+					A2(
+					$elm$html$Html$span,
+					_List_Nil,
+					A2(
+						$elm$core$List$intersperse,
+						A2(
+							$elm$html$Html$span,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(' / ')
+								])),
+						A2(
+							$elm$core$List$map,
+							$author$project$Main$printTransformation,
+							A2($author$project$Transformations$possibleTransformations, mSet, mSetPF)))),
+					$elm$html$Html$text(' of '),
+					$elm$html$Html$text(
+					$author$project$Main$printPrimeForm(mSetPF))
+				]));
+	};
+	var coprimes = A2(
+		$elm$core$List$filter,
+		$lynn$elm_arithmetic$Arithmetic$isCoprimeTo(n),
+		A2($elm$core$List$range, 2, n - 1));
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$id('M-related-sets')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('M-related sets:')
+					])),
+				A2(
+				$elm$html$Html$ul,
+				_List_Nil,
+				A2($elm$core$List$map, makeLi, coprimes))
+			]));
+};
 var $elm$core$Array$foldl = F3(
 	function (func, baseCase, _v0) {
 		var tree = _v0.c;
@@ -9358,7 +9467,8 @@ var $author$project$Main$viewRelatedSets = function (pcSet) {
 						$elm$html$Html$text('Related Sets')
 					])),
 				$author$project$Main$viewComplement(pcSet),
-				$author$project$Main$viewZMate(pcSet)
+				$author$project$Main$viewZMate(pcSet),
+				$author$project$Main$viewMSets(pcSet)
 			]));
 };
 var $author$project$ForteNumbers$getForteNumber = function (bitVecIndex) {
@@ -9591,7 +9701,7 @@ var $author$project$Main$viewSetFacts = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Cardinality: '),
+						$elm$html$Html$text('Set Cardinality: '),
 						$elm$html$Html$text(
 						$elm$core$String$fromInt(
 							$author$project$PcSetBasics$cardinality(model.j)))
@@ -9601,7 +9711,7 @@ var $author$project$Main$viewSetFacts = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('IC vector: '),
+						$elm$html$Html$text('Interval Class vector: '),
 						$elm$html$Html$text(
 						$author$project$Main$printIcVector(model))
 					]))
