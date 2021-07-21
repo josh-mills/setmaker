@@ -144,11 +144,21 @@ weightRecursive k n =
 
 weight : Float -> Int -> Float
 weight k n =
-    if n < 1 then
+    if k == 1 then
+        toFloat n
+    else if n < 1 then
         0
 
     else
         k / (k - 1) * (k ^ toFloat n - 1)
+
+
+validWeightingConstant : Float -> Int -> Bool
+validWeightingConstant k n =
+    let
+        w = weight k
+    in
+    w (n // 2) + 2 * w (n // 4 - 2) > 2 * w (n // 2 - 2) 
 
 
 wiccv : Float -> PcSet -> List Float

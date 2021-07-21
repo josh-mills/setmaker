@@ -16,6 +16,7 @@ import Regex exposing (Match, Regex)
 import Round
 import Set
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
+import IntervalCycles exposing (weight)
 
 
 
@@ -52,7 +53,7 @@ init _ =
       , pitchClasses = []
       , pcSet = PcSet (edoFromInt 12) []
       , edo = edoFromInt 12
-      , weightingConstant = 1.2
+      , weightingConstant = 1.3
       , icToOptimize = 1
       }
     , Cmd.none
@@ -70,6 +71,7 @@ type Msg
     | Reset
     | UpdateIc String
     | ClickSetLink String
+    | UpdateWeightingConstant String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -181,6 +183,12 @@ update msg model =
             , Cmd.none
             )
 
+        UpdateWeightingConstant k ->
+            ( { model | weightingConstant = Maybe.withDefault 1.2 <| String.toFloat k} 
+            , Cmd.none
+            )
+
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -228,8 +236,61 @@ viewUI model =
             , text (" " ++ setToString model.pcSet)
             ]
         , button [ onClick Reset ] [ text "reset" ]
+        , viewWeightingOptions model
         ]
 
+
+viewWeightingOptions : Model -> Html Msg
+viewWeightingOptions model =
+    let
+        w : Float -> Int -> String
+        w c n =
+            (if c == 1 then
+                ""
+            else
+                (String.fromFloat c)
+            )
+            ++ "w(" ++ (String.fromInt n) ++ ") = " 
+            ++ (Round.round 2 <| (*) c <| weight model.weightingConstant n)
+
+        e : Int
+        e = edoToInt model.edo
+
+        weight1 = (weight model.weightingConstant (e // 2)) + 2 * (weight model.weightingConstant (e // 4 - 2))
+
+        weight2 = 2 * (weight model.weightingConstant (e // 2 - 2)) 
+
+        gtlt = 
+            if weight1 >= weight2 then
+                " >= "
+            else 
+                " < "
+
+    in
+    div [ id "weighting-options"] 
+        [ p [] 
+            [ text "Weighting Constant: "
+            , input [ type_ "text", value (model.weightingConstant |> String.fromFloat), onInput UpdateWeightingConstant ] []
+            ]
+        , p [] 
+            [ text <| (w 1 <| e // 2) ++ "; "
+            , text <| (w 2 <| e // 4 - 2) ++ "; "
+            , text <| (w 2 <| e // 2 - 2) ++ "; "
+            , Html.br [] []
+            , text <| "w(" ++ (String.fromInt <| e // 2) ++ ") + 2w(" ++ (String.fromInt <| e // 4 - 2) ++ ")"
+            , text gtlt
+            , text <| "2w(" ++ (String.fromInt <| e//2 - 2) ++ ") "
+            , text <| "(" ++ (Round.round 2 weight1) ++ gtlt ++ (Round.round 2 weight2) ++ ")"
+            , Html.br [] []
+            , text <| String.fromFloat model.weightingConstant
+            , if IntervalCycles.validWeightingConstant model.weightingConstant (edoToInt model.edo) then
+                    text " is a valid weighting constant for n = "
+                else 
+                    text " is NOT a valid weighting constant for n = "
+            , text <| String.fromInt <| edoToInt model.edo
+            , text "."
+            ]
+        ]
 
 viewSetFacts : Model -> Html Msg
 viewSetFacts model =

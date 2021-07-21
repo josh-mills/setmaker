@@ -798,11 +798,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.aa.J === region.am.J)
+	if (region.ab.K === region.am.K)
 	{
-		return 'on line ' + region.aa.J;
+		return 'on line ' + region.ab.K;
 	}
-	return 'on lines ' + region.aa.J + ' through ' + region.am.J;
+	return 'on lines ' + region.ab.K + ' through ' + region.am.K;
 }
 
 
@@ -2718,9 +2718,9 @@ var _VirtualDom_mapEventTuple = F2(function(func, tuple)
 var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
-		w: func(record.w),
-		ab: record.ab,
-		Z: record.Z
+		x: func(record.x),
+		ac: record.ac,
+		_: record._
 	}
 });
 
@@ -2988,11 +2988,11 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		// 3 = Custom
 
 		var value = result.a;
-		var message = !tag ? value : tag < 3 ? value.a : value.w;
-		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ab;
+		var message = !tag ? value : tag < 3 ? value.a : value.x;
+		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ac;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.Z) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value._) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -3982,7 +3982,7 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 		impl.bE,
 		impl.bA,
 		function(sendToApp, initialModel) {
-			var divertHrefToApp = impl._ && impl._(sendToApp)
+			var divertHrefToApp = impl.aa && impl.aa(sendToApp)
 			var view = impl.bG;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
@@ -4057,7 +4057,7 @@ function _Browser_application(impl)
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
-		_: function(sendToApp)
+		aa: function(sendToApp)
 		{
 			key.a = sendToApp;
 			_Browser_window.addEventListener('popstate', key);
@@ -5307,15 +5307,15 @@ var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
 		{
-			b: $author$project$PcInt$edoFromInt(12),
-			E: 1,
+			a: $author$project$PcInt$edoFromInt(12),
+			F: 1,
 			j: A2(
 				$author$project$PcSetBasics$PcSet,
 				$author$project$PcInt$edoFromInt(12),
 				_List_Nil),
-			M: _List_Nil,
-			G: '',
-			ae: 1.2
+			N: _List_Nil,
+			H: '',
+			s: 1.2
 		},
 		$elm$core$Platform$Cmd$none);
 };
@@ -6927,6 +6927,7 @@ var $elm$core$List$take = F2(
 	function (n, list) {
 		return A3($elm$core$List$takeFast, 0, n, list);
 	});
+var $elm$core$String$toFloat = _String_toFloat;
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		update:
@@ -6937,7 +6938,7 @@ var $author$project$Main$update = F2(
 					var $temp$msg = $author$project$Main$Typing(set),
 						$temp$model = _Utils_update(
 						model,
-						{G: set});
+						{H: set});
 					msg = $temp$msg;
 					model = $temp$model;
 					continue update;
@@ -6947,7 +6948,7 @@ var $author$project$Main$update = F2(
 						$elm$core$Maybe$withDefault,
 						$elm$regex$Regex$never,
 						$elm$regex$Regex$fromString('^(\\d{1,2})[-–][zZ]?(\\d{1,2})[zZ]?$'));
-					var edo12 = $author$project$PcInt$edoToInt(model.b) === 12;
+					var edo12 = $author$project$PcInt$edoToInt(model.a) === 12;
 					var isForteNumber = edo12 && A2($elm$regex$Regex$contains, forteNumberRegex, input);
 					var cleanup = function (s) {
 						var charsRegex = A2(
@@ -6996,24 +6997,24 @@ var $author$project$Main$update = F2(
 								$elm$core$List$head(matches));
 							return A2(
 								$elm$core$Maybe$withDefault,
-								A2($author$project$PcSetBasics$PcSet, model.b, _List_Nil),
+								A2($author$project$PcSetBasics$PcSet, model.a, _List_Nil),
 								A2($author$project$ForteNumbers$primeFormForForteNumber, card, catNum));
 						} else {
 							if (edo12) {
 								return A2(
 									$author$project$PcSetBasics$PcSet,
-									model.b,
+									model.a,
 									A2(
 										$elm$core$List$map,
-										$author$project$PcInt$pcInt(model.b),
+										$author$project$PcInt$pcInt(model.a),
 										A2($elm$core$List$map, $author$project$PitchClass$toInt, pcs)));
 							} else {
 								return A2(
 									$author$project$PcSetBasics$PcSet,
-									model.b,
+									model.a,
 									A2(
 										$author$project$PcInt$listFromInput,
-										model.b,
+										model.a,
 										cleanup(input)));
 							}
 						}
@@ -7021,7 +7022,7 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{j: set, M: pcs, G: input}),
+							{j: set, N: pcs, H: input}),
 						$elm$core$Platform$Cmd$none);
 				case 1:
 					var input = msg.a;
@@ -7038,7 +7039,7 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								b: newEdo,
+								a: newEdo,
 								j: A2($author$project$PcSetBasics$PcSet, newEdo, s)
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -7049,21 +7050,33 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								j: A2($author$project$PcSetBasics$PcSet, model.b, _List_Nil),
-								M: _List_Nil,
-								G: ''
+								j: A2($author$project$PcSetBasics$PcSet, model.a, _List_Nil),
+								N: _List_Nil,
+								H: ''
 							}),
 						$elm$core$Platform$Cmd$none);
-				default:
+				case 4:
 					var ic = msg.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{
-								E: A2(
+								F: A2(
 									$elm$core$Maybe$withDefault,
 									1,
 									$elm$core$String$toInt(ic))
+							}),
+						$elm$core$Platform$Cmd$none);
+				default:
+					var k = msg.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								s: A2(
+									$elm$core$Maybe$withDefault,
+									1.2,
+									$elm$core$String$toFloat(k))
 							}),
 						$elm$core$Platform$Cmd$none);
 			}
@@ -7421,12 +7434,12 @@ var $author$project$Main$viewCycleOrders = function (model) {
 	};
 	var maxOrdering = A2(
 		$elm$core$List$map,
-		$author$project$PcInt$pcInt(model.b),
+		$author$project$PcInt$pcInt(model.a),
 		A2(
 			$author$project$IntervalCycles$orderToMaximizeIC,
-			$author$project$PcInt$edoToInt(model.b),
-			model.E));
-	var ic = $elm$core$String$fromInt(model.E);
+			$author$project$PcInt$edoToInt(model.a),
+			model.F));
+	var ic = $elm$core$String$fromInt(model.F);
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -7440,7 +7453,7 @@ var $author$project$Main$viewCycleOrders = function (model) {
 						$elm$html$Html$text('Possible Sets to Minimize or Maximize Unbroken Interval Class Cycles')
 					])),
 				$author$project$Main$viewGenericIntervalCycles(
-				$author$project$PcInt$edoToInt(model.b)),
+				$author$project$PcInt$edoToInt(model.a)),
 				A2(
 				$elm$html$Html$p,
 				_List_Nil,
@@ -7458,7 +7471,7 @@ var $author$project$Main$viewCycleOrders = function (model) {
 									function (i) {
 										return (i / 2) | 0;
 									}(
-										$author$project$PcInt$edoToInt(model.b)))),
+										$author$project$PcInt$edoToInt(model.a)))),
 								$elm$html$Html$Attributes$value(ic),
 								$elm$html$Html$Events$onInput($author$project$Main$UpdateIc)
 							]),
@@ -7505,12 +7518,12 @@ var $author$project$Main$viewCycleOrders = function (model) {
 							A2(
 								$elm$core$List$map,
 								function (i) {
-									return A3($author$project$IntervalCycles$minCycleSaturationForCardinality, model.b, model.E, i);
+									return A3($author$project$IntervalCycles$minCycleSaturationForCardinality, model.a, model.F, i);
 								},
 								A2(
 									$elm$core$List$range,
 									1,
-									$author$project$PcInt$edoToInt(model.b))))))),
+									$author$project$PcInt$edoToInt(model.a))))))),
 				A2(
 				$elm$html$Html$h4,
 				_List_Nil,
@@ -7551,7 +7564,7 @@ var $author$project$Main$viewCycleOrders = function (model) {
 							prettifySet,
 							A2(
 								$elm$core$List$map,
-								$author$project$PcSetBasics$PcSet(model.b),
+								$author$project$PcSetBasics$PcSet(model.a),
 								A2(
 									$elm$core$List$map,
 									function (i) {
@@ -7560,7 +7573,7 @@ var $author$project$Main$viewCycleOrders = function (model) {
 									A2(
 										$elm$core$List$range,
 										1,
-										$author$project$PcInt$edoToInt(model.b))))))))
+										$author$project$PcInt$edoToInt(model.a))))))))
 			]));
 };
 var $elm$core$List$filter = F2(
@@ -7853,7 +7866,7 @@ var $elm$core$List$sum = function (numbers) {
 var $elm$core$Basics$pow = _Basics_pow;
 var $author$project$IntervalCycles$weight = F2(
 	function (k, n) {
-		return (n < 1) ? 0 : ((k / (k - 1)) * (A2($elm$core$Basics$pow, k, n) - 1));
+		return (k === 1) ? n : ((n < 1) ? 0 : ((k / (k - 1)) * (A2($elm$core$Basics$pow, k, n) - 1)));
 	});
 var $author$project$IntervalCycles$wiccv = F2(
 	function (k, pcSet) {
@@ -9761,6 +9774,87 @@ var $author$project$PitchClass$toString = function (_v0) {
 	}();
 	return _Utils_ap(letter, acc);
 };
+var $author$project$Main$UpdateWeightingConstant = function (a) {
+	return {$: 6, a: a};
+};
+var $elm$html$Html$br = _VirtualDom_node('br');
+var $author$project$IntervalCycles$validWeightingConstant = F2(
+	function (k, n) {
+		var w = $author$project$IntervalCycles$weight(k);
+		return _Utils_cmp(
+			w((n / 2) | 0) + (2 * w(((n / 4) | 0) - 2)),
+			2 * w(((n / 2) | 0) - 2)) > 0;
+	});
+var $author$project$Main$viewWeightingOptions = function (model) {
+	var w = F2(
+		function (c, n) {
+			return ((c === 1) ? '' : $elm$core$String$fromFloat(c)) + ('w(' + ($elm$core$String$fromInt(n) + (') = ' + A2(
+				$myrho$elm_round$Round$round,
+				2,
+				c * A2($author$project$IntervalCycles$weight, model.s, n)))));
+		});
+	var e = $author$project$PcInt$edoToInt(model.a);
+	var weight1 = A2($author$project$IntervalCycles$weight, model.s, (e / 2) | 0) + (2 * A2($author$project$IntervalCycles$weight, model.s, ((e / 4) | 0) - 2));
+	var weight2 = 2 * A2($author$project$IntervalCycles$weight, model.s, ((e / 2) | 0) - 2);
+	var gtlt = (_Utils_cmp(weight1, weight2) > -1) ? ' >= ' : ' < ';
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$id('weighting-options')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Weighting Constant: '),
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('text'),
+								$elm$html$Html$Attributes$value(
+								$elm$core$String$fromFloat(model.s)),
+								$elm$html$Html$Events$onInput($author$project$Main$UpdateWeightingConstant)
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						A2(w, 1, (e / 2) | 0) + '; '),
+						$elm$html$Html$text(
+						A2(w, 2, ((e / 4) | 0) - 2) + '; '),
+						$elm$html$Html$text(
+						A2(w, 2, ((e / 2) | 0) - 2) + '; '),
+						A2($elm$html$Html$br, _List_Nil, _List_Nil),
+						$elm$html$Html$text(
+						'w(' + ($elm$core$String$fromInt((e / 2) | 0) + (') + 2w(' + ($elm$core$String$fromInt(((e / 4) | 0) - 2) + ')')))),
+						$elm$html$Html$text(gtlt),
+						$elm$html$Html$text(
+						'2w(' + ($elm$core$String$fromInt(((e / 2) | 0) - 2) + ') ')),
+						$elm$html$Html$text(
+						'(' + (A2($myrho$elm_round$Round$round, 2, weight1) + (gtlt + (A2($myrho$elm_round$Round$round, 2, weight2) + ')')))),
+						A2($elm$html$Html$br, _List_Nil, _List_Nil),
+						$elm$html$Html$text(
+						$elm$core$String$fromFloat(model.s)),
+						A2(
+						$author$project$IntervalCycles$validWeightingConstant,
+						model.s,
+						$author$project$PcInt$edoToInt(model.a)) ? $elm$html$Html$text(' is a valid weighting constant for n = ') : $elm$html$Html$text(' is NOT a valid weighting constant for n = '),
+						$elm$html$Html$text(
+						$elm$core$String$fromInt(
+							$author$project$PcInt$edoToInt(model.a))),
+						$elm$html$Html$text('.')
+					]))
+			]));
+};
 var $author$project$Main$viewUI = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -9787,7 +9881,7 @@ var $author$project$Main$viewUI = function (model) {
 								$elm$html$Html$Attributes$type_('number'),
 								$elm$html$Html$Attributes$value(
 								$elm$core$String$fromInt(
-									$author$project$PcInt$edoToInt(model.b))),
+									$author$project$PcInt$edoToInt(model.a))),
 								$elm$html$Html$Events$onInput($author$project$Main$UpdateEdo)
 							]),
 						_List_Nil)
@@ -9797,13 +9891,13 @@ var $author$project$Main$viewUI = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						($author$project$PcInt$edoToInt(model.b) === 12) ? $elm$html$Html$text('Pitch classes or Forte number: ') : $elm$html$Html$text('Pitch classes: '),
+						($author$project$PcInt$edoToInt(model.a) === 12) ? $elm$html$Html$text('Pitch classes or Forte number: ') : $elm$html$Html$text('Pitch classes: '),
 						A2(
 						$elm$html$Html$input,
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$placeholder('type set...'),
-								$elm$html$Html$Attributes$value(model.G),
+								$elm$html$Html$Attributes$value(model.H),
 								$elm$html$Html$Events$onInput($author$project$Main$Typing)
 							]),
 						_List_Nil)
@@ -9817,7 +9911,7 @@ var $author$project$Main$viewUI = function (model) {
 						A2(
 							$elm$core$String$join,
 							', ',
-							A2($elm$core$List$map, $author$project$PitchClass$toString, model.M))),
+							A2($elm$core$List$map, $author$project$PitchClass$toString, model.N))),
 						$elm$html$Html$text(
 						' ' + $author$project$PcSetBasics$setToString(model.j))
 					])),
@@ -9830,7 +9924,8 @@ var $author$project$Main$viewUI = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$text('reset')
-					]))
+					])),
+				$author$project$Main$viewWeightingOptions(model)
 			]));
 };
 var $author$project$Main$view = function (model) {
@@ -9842,7 +9937,7 @@ var $author$project$Main$view = function (model) {
 				$author$project$Main$viewUI(model),
 				$author$project$Main$viewSetFacts(model),
 				$author$project$Main$viewRelatedSets(model.j),
-				A2($author$project$Main$viewIntervalCycles, model.ae, model.j),
+				A2($author$project$Main$viewIntervalCycles, model.s, model.j),
 				$author$project$Main$viewCycleOrders(model)
 			]));
 };
