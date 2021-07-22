@@ -61,19 +61,15 @@ intervalCycleFragmentations pcSet =
         |> List.map (genericIntervalCycle modulus)
         |> List.map
             (List.map <|
-                List.map
-                    (\i ->
-                        case i of
-                            Just n ->
-                                if Set.member n set then
-                                    Just n
+                List.map <|
+                    Maybe.andThen
+                        (\n ->
+                            if Set.member n set then
+                                Just n
 
-                                else
-                                    Nothing
-
-                            Nothing ->
+                            else
                                 Nothing
-                    )
+                        )
             )
 
 
