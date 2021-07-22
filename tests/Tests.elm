@@ -303,4 +303,20 @@ intervalCycleTests =
                     |> List.map (List.map (\i -> Just i) )
                     |> testGenericIntervalCycle 12 6
             ]
+        , describe "test the weighting functions" <|
+            [ fuzz2 (Fuzz.floatRange 0.0 2.0) (Fuzz.intRange 0 96) "high tolerance for a wide range of values" <|
+                \k x ->
+                    let
+                        w =
+                            IntervalCycles.weightRecursive k x
+
+                        tolerance =
+                            max 0.00001 (logBase 10 w)
+                    in
+                    Expect.within (Expect.Absolute tolerance) (weight k x) w
+            ,  fuzz2 (Fuzz.floatRange 0.0 2.0) (Fuzz.intRange 0 24) "fine tolerance for small universe values" <|
+                \k x ->
+                    IntervalCycles.weightRecursive k x
+                        |> Expect.within (Expect.Absolute 0.0001) (weight k x)
+            ]
         ]

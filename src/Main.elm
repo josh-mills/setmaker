@@ -8,7 +8,7 @@ import Helpers
 import Html exposing (Html, button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
 import Html.Attributes as Attr exposing (id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import IntervalCycles exposing (CyclicProportionSaturation, iccvString, maximallySaturatedSets, maximumWICCs, minimallySaturatedSets, minimumWICCs, wiccvString)
+import IntervalCycles exposing (CyclicProportionSaturation, iccvString, maximallySaturatedSets, maximumWICCs, minimallySaturatedSets, minimumWICCs, weight, wiccvString)
 import PcInt exposing (Edo, PcInt, edoFromInt, edoToInt, invertPcInt, listFromInput, pcInt, toString, transposePcInt)
 import PcSetBasics exposing (PcSet(..), cardinality, icCount, icVector, normalForm, primeForm, setToString)
 import PitchClass exposing (PitchClass, listFromInput, toInt)
@@ -16,7 +16,6 @@ import Regex exposing (Match, Regex)
 import Round
 import Set
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
-import IntervalCycles exposing (weight)
 
 
 
@@ -184,10 +183,9 @@ update msg model =
             )
 
         UpdateWeightingConstant k ->
-            ( { model | weightingConstant = Maybe.withDefault 1.2 <| String.toFloat k} 
+            ( { model | weightingConstant = Maybe.withDefault 1.2 <| String.toFloat k }
             , Cmd.none
             )
-
 
 
 subscriptions : Model -> Sub Msg
@@ -247,50 +245,58 @@ viewWeightingOptions model =
         w c n =
             (if c == 1 then
                 ""
-            else
-                (String.fromFloat c)
+
+             else
+                String.fromFloat c
             )
-            ++ "w(" ++ (String.fromInt n) ++ ") = " 
-            ++ (Round.round 2 <| (*) c <| weight model.weightingConstant n)
+                ++ "w("
+                ++ String.fromInt n
+                ++ ") = "
+                ++ (Round.round 2 <| (*) c <| weight model.weightingConstant n)
 
         e : Int
-        e = edoToInt model.edo
+        e =
+            edoToInt model.edo
 
-        weight1 = (weight model.weightingConstant (e // 2)) + 2 * (weight model.weightingConstant (e // 4 - 2))
+        weight1 =
+            weight model.weightingConstant (e // 2) + 2 * weight model.weightingConstant (e // 4 - 2)
 
-        weight2 = 2 * (weight model.weightingConstant (e // 2 - 2)) 
+        weight2 =
+            2 * weight model.weightingConstant (e // 2 - 2)
 
-        gtlt = 
+        gtlt =
             if weight1 >= weight2 then
                 " >= "
-            else 
-                " < "
 
+            else
+                " < "
     in
-    div [ id "weighting-options"] 
-        [ p [] 
+    div [ id "weighting-options" ]
+        [ p []
             [ text "Weighting Constant: "
             , input [ type_ "text", value (model.weightingConstant |> String.fromFloat), onInput UpdateWeightingConstant ] []
             ]
-        , p [] 
+        , p []
             [ text <| (w 1 <| e // 2) ++ "; "
             , text <| (w 2 <| e // 4 - 2) ++ "; "
             , text <| (w 2 <| e // 2 - 2) ++ "; "
             , Html.br [] []
             , text <| "w(" ++ (String.fromInt <| e // 2) ++ ") + 2w(" ++ (String.fromInt <| e // 4 - 2) ++ ")"
             , text gtlt
-            , text <| "2w(" ++ (String.fromInt <| e//2 - 2) ++ ") "
-            , text <| "(" ++ (Round.round 2 weight1) ++ gtlt ++ (Round.round 2 weight2) ++ ")"
+            , text <| "2w(" ++ (String.fromInt <| e // 2 - 2) ++ ") "
+            , text <| "(" ++ Round.round 2 weight1 ++ gtlt ++ Round.round 2 weight2 ++ ")"
             , Html.br [] []
             , text <| String.fromFloat model.weightingConstant
             , if IntervalCycles.validWeightingConstant model.weightingConstant (edoToInt model.edo) then
-                    text " is a valid weighting constant for n = "
-                else 
-                    text " is NOT a valid weighting constant for n = "
+                text " is a valid weighting constant for n = "
+
+              else
+                text " is NOT a valid weighting constant for n = "
             , text <| String.fromInt <| edoToInt model.edo
             , text "."
             ]
         ]
+
 
 viewSetFacts : Model -> Html Msg
 viewSetFacts model =
@@ -708,25 +714,28 @@ viewZMate pcSet =
 viewMSets : PcSet -> Html Msg
 viewMSets pcSet =
     let
-        n = 
+        n =
             PcSetBasics.setModulus pcSet
 
-        coprimes = 
-            List.range 2 (n-1)
-            |> List.filter (Arithmetic.isCoprimeTo n)
+        coprimes =
+            List.range 2 (n - 1)
+                |> List.filter (Arithmetic.isCoprimeTo n)
 
         makeLi : Int -> Html Msg
         makeLi i =
             let
-                mSet = PcSetBasics.multiplySet i pcSet
+                mSet =
+                    PcSetBasics.multiplySet i pcSet
 
-                set = PcSetBasics.setToString mSet
-                
-                mSetPF = PcSetBasics.primeForm mSet
+                set =
+                    PcSetBasics.setToString mSet
+
+                mSetPF =
+                    PcSetBasics.primeForm mSet
             in
             li []
-                [ span [] [text "M", Html.sub [] [text (String.fromInt i)], text ": "]
-                , Html.a [ Attr.href "#", onClick (ClickSetLink set)] [text set]
+                [ span [] [ text "M", Html.sub [] [ text (String.fromInt i) ], text ": " ]
+                , Html.a [ Attr.href "#", onClick (ClickSetLink set) ] [ text set ]
                 , text " = "
                 , span []
                     (Transformations.possibleTransformations mSet mSetPF
@@ -736,10 +745,9 @@ viewMSets pcSet =
                 , text " of "
                 , text (printPrimeForm mSetPF)
                 ]
-
     in
     div [ id "M-related-sets" ]
-        [ p [] [ text "M-related sets:"]
+        [ p [] [ text "M-related sets:" ]
         , ul []
             (List.map makeLi coprimes)
         ]

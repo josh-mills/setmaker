@@ -4,9 +4,8 @@ import Array exposing (Array)
 import Dict exposing (Dict)
 import Helpers exposing (compareLists, rotationalArrays)
 import List.Extra
-import PcInt exposing (Edo, PcInt, edoToInt, intervalClass, pcIntToInt)
+import PcInt exposing (Edo, PcInt, edoToInt, intervalClass, pcInt, pcIntToInt)
 import Set exposing (Set)
-import PcInt exposing (pcInt)
 
 
 {-| Basic analysis and transformations of pitch class sets

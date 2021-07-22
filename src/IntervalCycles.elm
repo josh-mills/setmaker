@@ -146,6 +146,7 @@ weight : Float -> Int -> Float
 weight k n =
     if k == 1 then
         toFloat n
+
     else if n < 1 then
         0
 
@@ -156,9 +157,10 @@ weight k n =
 validWeightingConstant : Float -> Int -> Bool
 validWeightingConstant k n =
     let
-        w = weight k
+        w =
+            weight k
     in
-    w (n // 2) + 2 * w (n // 4 - 2) > 2 * w (n // 2 - 2) 
+    w (n // 2) + 2 * w (n // 4 - 2) > 2 * w (n // 2 - 2)
 
 
 wiccv : Float -> PcSet -> List Float
