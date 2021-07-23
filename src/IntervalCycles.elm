@@ -150,6 +150,14 @@ weight k n =
         k / (k - 1) * (k ^ toFloat n - 1)
 
 
+weightingConstantForEdo : Edo -> Float
+weightingConstantForEdo modulus =
+    edoToInt modulus
+        |> toFloat
+        |> (\x -> 1.495 + (1.064 - 1.495) / (1 + (x / 15.128) ^ 3.348))
+        |> Round.roundNum 3
+
+
 validWeightingConstant : Float -> Int -> Bool
 validWeightingConstant k n =
     let

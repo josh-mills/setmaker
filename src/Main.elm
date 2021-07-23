@@ -8,7 +8,7 @@ import Helpers
 import Html exposing (Html, button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
 import Html.Attributes as Attr exposing (id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import IntervalCycles exposing (CyclicProportionSaturation, iccvString, maximallySaturatedSets, maximumWICCs, minimallySaturatedSets, minimumWICCs, weight, wiccvString)
+import IntervalCycles exposing (CyclicProportionSaturation, iccvString, maximallySaturatedSets, maximumWICCs, minimallySaturatedSets, minimumWICCs, weight, weightingConstantForEdo, wiccvString)
 import PcInt exposing (Edo, PcInt, edoFromInt, edoToInt, invertPcInt, listFromInput, pcInt, toString, transposePcInt)
 import PcSetBasics exposing (PcSet(..), cardinality, icCount, icVector, normalForm, primeForm, setToString)
 import PitchClass exposing (PitchClass, listFromInput, toInt)
@@ -52,7 +52,7 @@ init _ =
       , pitchClasses = []
       , pcSet = PcSet (edoFromInt 12) []
       , edo = edoFromInt 12
-      , weightingConstant = 1.3
+      , weightingConstant = 1.2
       , icToOptimize = 1
       }
     , Cmd.none
@@ -163,7 +163,7 @@ update msg model =
                 s =
                     (\(PcSet _ pcs) -> pcs) model.pcSet
             in
-            ( { model | edo = newEdo, pcSet = PcSet newEdo s }
+            ( { model | edo = newEdo, pcSet = PcSet newEdo s, weightingConstant = weightingConstantForEdo newEdo }
             , Cmd.none
             )
 
@@ -274,7 +274,7 @@ viewWeightingOptions model =
     div [ id "weighting-options" ]
         [ p []
             [ text "Weighting Constant: "
-            , input [ type_ "text", value (model.weightingConstant |> String.fromFloat), onInput UpdateWeightingConstant ] []
+            , input [ type_ "text", value (model.weightingConstant |> Round.round 2), onInput UpdateWeightingConstant ] []
             ]
         , p []
             [ text <| (w 1 <| e // 2) ++ "; "
@@ -284,7 +284,8 @@ viewWeightingOptions model =
             , text <| "w(" ++ (String.fromInt <| e // 2) ++ ") + 2w(" ++ (String.fromInt <| e // 4 - 2) ++ ")"
             , text gtlt
             , text <| "2w(" ++ (String.fromInt <| e // 2 - 2) ++ ") "
-            , text <| "(" ++ Round.round 2 weight1 ++ gtlt ++ Round.round 2 weight2 ++ ")"
+            , text <| "(" ++ Round.round 2 weight1 ++ gtlt ++ Round.round 2 weight2 ++ "). "
+            , text <| Round.round 4 (weight1 / weight2) ++ " : 1"
             , Html.br [] []
             , text <| String.fromFloat model.weightingConstant
             , if IntervalCycles.validWeightingConstant model.weightingConstant (edoToInt model.edo) then
@@ -294,8 +295,11 @@ viewWeightingOptions model =
                 text " is NOT a valid weighting constant for n = "
             , text <| String.fromInt <| edoToInt model.edo
             , text "."
+            , Html.br [] []
+            , text <| "Proposed weighting constant: " ++ Round.round 2 (weightingConstantForEdo model.edo)
             ]
         ]
+
 
 
 viewSetFacts : Model -> Html Msg
