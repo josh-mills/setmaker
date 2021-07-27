@@ -1,11 +1,20 @@
 module Main exposing (main)
 
+--,( button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
+
 import Arithmetic
 import Array exposing (Array)
 import Browser
+import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events as Events
+import Element.Font as Font
+import Element.Input as Input
+import Element.Region as Region
 import ForteNumbers
 import Helpers
-import Html exposing (Html, button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
+import Html exposing (Html)
 import Html.Attributes as Attr exposing (id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import IntervalCycles exposing (CyclicProportionSaturation, iccvString, maximallySaturatedSets, maximumWICCs, minimallySaturatedSets, minimumWICCs, weight, weightingConstantForEdo, wiccvString)
@@ -16,6 +25,8 @@ import Regex exposing (Match, Regex)
 import Round
 import Set
 import Transformations exposing (Transformation(..), possibleTransformations, transformationToString)
+import Html exposing (a)
+import String exposing (trim)
 
 
 
@@ -43,6 +54,7 @@ type alias Model =
     , edo : Edo
     , weightingConstant : Float
     , icToOptimize : Int
+    , option : Option
     }
 
 
@@ -54,6 +66,7 @@ init _ =
       , edo = edoFromInt 12
       , weightingConstant = 1.2
       , icToOptimize = 1
+      , option = SingleSet
       }
     , Cmd.none
     )
@@ -65,17 +78,32 @@ init _ =
 
 type Msg
     = Typing String
-    | UpdateEdo String
+    | UpdateEdo Int
+    | UpdateEdoString String
     | Calculate
     | Reset
     | UpdateIc String
     | ClickSetLink String
-    | UpdateWeightingConstant String
+    | UpdateWeightingConstant Float
+    | UpdateWeightingConstantString String
+    | ClickOption Option
+
+
+type Option
+    = About
+    | CombineSets
+    | Settings
+    | SingleSet
+    | TransformationalPossibilities
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ClickOption option ->
+            ( { model | option = option}
+            , Cmd.none )
+
         ClickSetLink set ->
             update (Typing set) { model | userInput = set }
 
@@ -93,15 +121,6 @@ update msg model =
                 isForteNumber : Bool
                 isForteNumber =
                     edo12 && Regex.contains forteNumberRegex input
-
-                cleanup : String -> String
-                cleanup s =
-                    let
-                        charsRegex =
-                            Maybe.withDefault Regex.never <|
-                                Regex.fromString "[{}()\\[\\]]"
-                    in
-                    Regex.replace charsRegex (\_ -> "") s
 
                 pcs : List PitchClass
                 pcs =
@@ -153,7 +172,7 @@ update msg model =
             , Cmd.none
             )
 
-        UpdateEdo input ->
+        UpdateEdoString input ->
             let
                 newEdo : Edo
                 newEdo =
@@ -167,13 +186,23 @@ update msg model =
             , Cmd.none
             )
 
+        UpdateEdo input ->
+            let
+                newEdo : Edo
+                newEdo =
+                    edoFromInt input
+            in
+            ( { model | edo = newEdo, weightingConstant = weightingConstantForEdo newEdo } |> clearInputs
+            , Cmd.none
+            )
+
         Calculate ->
             ( model
             , Cmd.none
             )
 
         Reset ->
-            ( { model | userInput = "", pcSet = PcSet model.edo [], pitchClasses = [] }
+            ( clearInputs model
             , Cmd.none
             )
 
@@ -183,9 +212,29 @@ update msg model =
             )
 
         UpdateWeightingConstant k ->
+            ( { model | weightingConstant = k }
+            , Cmd.none
+            )
+
+        UpdateWeightingConstantString k ->
             ( { model | weightingConstant = Maybe.withDefault 1.2 <| String.toFloat k }
             , Cmd.none
             )
+
+
+clearInputs : Model -> Model
+clearInputs model =
+    { model | userInput = "", pitchClasses = [], pcSet = PcSet model.edo []}
+
+
+cleanup : String -> String
+cleanup s =
+    let
+        charsRegex =
+            Maybe.withDefault Regex.never <|
+                Regex.fromString "[{}()\\[\\]]"
+    in
+    Regex.replace charsRegex (\_ -> "") s |> trim
 
 
 subscriptions : Model -> Sub Msg
@@ -197,147 +246,202 @@ subscriptions _ =
 -- VIEW
 
 
+
 view : Model -> Html Msg
 view model =
-    div []
-        [ viewUI model
-        , viewSetFacts model
-        , viewRelatedSets model.pcSet
-        , viewIntervalCycles model.weightingConstant model.pcSet
-        , viewCycleOrders model
+    layout
+        [ Font.size 18
+        , Font.family
+            [ Font.typeface "Courier"
+            , Font.monospace
+            ]
+        -- , explain Debug.todo
+        ]
+        ( column [ width fill, paddingXY 8 8 ]
+            [ topBar
+            , mainContent model
+            ] )
 
-        -- , viewMinIcOccurences model.edo
-        -- , viewMaxIcOccurences model.edo
-        -- , viewMinWICCs model.edo model.weightingConstant
-        -- , viewMaxWICCs model.edo model.weightingConstant
+
+topBar : Element Msg
+topBar =
+    wrappedRow [ Region.navigation, width fill, Font.size 36, spacing 12, paddingXY 8 8 ]
+        [ text "Setmaker!"
+        , menuButton "Set Properties" SingleSet 
+        , menuButton "Transformations" TransformationalPossibilities
+        , menuButton "Combine Sets" CombineSets
+        , menuButton "Settings" Settings
+        , menuButton "About" About
         ]
 
 
-viewUI : Model -> Html Msg
-viewUI model =
-    div []
-        [ h1 [] [ text "Setmaker, v. 6.0" ]
-        , p []
-            [ text "Modulus: "
-            , input [ type_ "number", value (edoToInt model.edo |> String.fromInt), onInput UpdateEdo ] []
-            ]
-        , p []
-            [ if edoToInt model.edo == 12 then
-                text "Pitch classes or Forte number: "
+menuButton : String -> Option -> Element Msg
+menuButton txt option =
+    el 
+        [ paddingXY 14 8
+        , Font.size 18
+        , pointer
+        , Border.solid
+        , Border.color <| rgb 0.7 0.7 0.7
+        , Border.width 2
+        , Border.rounded 8
+        , Events.onClick (ClickOption option)
+        ] 
+        (text txt)
 
-              else
-                text "Pitch classes: "
-            , input [ placeholder "type set...", value model.userInput, onInput Typing ] []
+
+sectionHeading : String -> Element Msg
+sectionHeading txt =
+    el 
+        [ Region.heading 1
+        , Font.size 28
+        , padding 6
+        ]
+        ( text txt )
+
+
+secondHeading : String -> Element Msg
+secondHeading txt =
+    el 
+        [ Region.heading 2
+        , Font.size 24
+        , paddingEach { top = 12, left = 0, right = 0, bottom = 8}
+        ]
+        ( text txt )
+
+
+mainContent : Model -> Element Msg
+mainContent model =
+    el [ Region.mainContent, paddingXY 20 20 ]
+        (case model.option of
+            Settings ->
+                viewSettings model
+
+            SingleSet ->
+                viewSetFacts model
+
+            About ->
+                viewAbout
+
+            _ ->
+                sectionHeading "not implemented. :("
+        )
+
+
+viewSettings : Model -> Element Msg
+viewSettings model =
+    column [ width <| px 500, Font.size 18 ]
+        [ sectionHeading "Settings"
+        , Input.slider
+            sliderBackground
+            { onChange = \x -> UpdateEdo (truncate x)
+            , label = Input.labelLeft [] (text <| "modulus (" ++ (String.fromInt <| edoToInt model.edo) ++ "): ")
+            , min = 1
+            , max = 48
+            , value = toFloat <| edoToInt model.edo
+            , thumb = Input.defaultThumb
+            , step = Just 1
+            }
+        , Input.slider
+            sliderBackground
+            { onChange = UpdateWeightingConstant
+            , label = Input.labelLeft [] (text <| "weighting constant (" ++ Round.round 2 model.weightingConstant ++ "): ")
+            , min = 1
+            , max = 2
+            , value = model.weightingConstant
+            , thumb = Input.defaultThumb
+            , step = Just 0.001
+            }
+        ]
+
+sliderBackground : List (Attribute Msg)
+sliderBackground =
+    [ Element.height (Element.px 20)
+    , Element.behindContent
+        (Element.el
+            [ Element.width Element.fill
+            , Element.height (Element.px 2)
+            , Element.centerY
+            , Background.color <| rgba 0.5 0.5 0.5 0.5
+            , Border.rounded 2
             ]
-        , p []
+            Element.none
+        )
+    ]
+
+
+viewSetFacts : Model -> Element Msg
+viewSetFacts model =
+    column [ spacing 8 ]
+        [ sectionHeading "View the Properties of a Single Set"
+        , row [spacing 18]
+            [ Input.text [width <| px 300, paddingXY 12 6, spacing 12]
+            { onChange = Typing
+            , text = model.userInput
+            , placeholder = Just <| Input.placeholder [] 
+                (if edoToInt model.edo == 12 then
+                    text "input set or Forte number"
+                else
+                    text "input set")
+            , label = Input.labelLeft [] (text "input set:")
+            }
+            , Input.button 
+                [ Background.color <| rgba 0.25 0.25 0.25 0.3
+                , Border.solid
+                , Border.rounded 5
+                , paddingXY 9 4
+                ] 
+                { onPress = Just Reset
+                , label = text "Clear"
+                }
+            ]
+        , paragraph [] 
             [ text (String.join ", " (List.map PitchClass.toString model.pitchClasses))
             , text (" " ++ setToString model.pcSet)
+            
             ]
-        , button [ onClick Reset ] [ text "reset" ]
-        , viewWeightingOptions model
-        ]
-
-
-viewWeightingOptions : Model -> Html Msg
-viewWeightingOptions model =
-    let
-        w : Float -> Int -> String
-        w c n =
-            (if c == 1 then
-                ""
-
-             else
-                String.fromFloat c
-            )
-                ++ "w("
-                ++ String.fromInt n
-                ++ ") = "
-                ++ (Round.round 2 <| (*) c <| weight model.weightingConstant n)
-
-        e : Int
-        e =
-            edoToInt model.edo
-
-        weight1 =
-            weight model.weightingConstant (e // 2) + 2 * weight model.weightingConstant (e // 4 - 2)
-
-        weight2 =
-            2 * weight model.weightingConstant (e // 2 - 2)
-
-        gtlt =
-            if weight1 >= weight2 then
-                " >= "
-
-            else
-                " < "
-    in
-    div [ id "weighting-options" ]
-        [ p []
-            [ text "Weighting Constant: "
-            , input [ type_ "text", value (model.weightingConstant |> Round.round 2), onInput UpdateWeightingConstant ] []
-            ]
-        , p []
-            [ text <| (w 1 <| e // 2) ++ "; "
-            , text <| (w 2 <| e // 4 - 2) ++ "; "
-            , text <| (w 2 <| e // 2 - 2) ++ "; "
-            , Html.br [] []
-            , text <| "w(" ++ (String.fromInt <| e // 2) ++ ") + 2w(" ++ (String.fromInt <| e // 4 - 2) ++ ")"
-            , text gtlt
-            , text <| "2w(" ++ (String.fromInt <| e // 2 - 2) ++ ") "
-            , text <| "(" ++ Round.round 2 weight1 ++ gtlt ++ Round.round 2 weight2 ++ "). "
-            , text <| Round.round 4 (weight1 / weight2) ++ " : 1"
-            , Html.br [] []
-            , text <| String.fromFloat model.weightingConstant
-            , if IntervalCycles.validWeightingConstant model.weightingConstant (edoToInt model.edo) then
-                text " is a valid weighting constant for n = "
-
-              else
-                text " is NOT a valid weighting constant for n = "
-            , text <| String.fromInt <| edoToInt model.edo
-            , text "."
-            , Html.br [] []
-            , text <| "Proposed weighting constant: " ++ Round.round 2 (weightingConstantForEdo model.edo)
-            ]
-        ]
-
-
-
-viewSetFacts : Model -> Html Msg
-viewSetFacts model =
-    let
-        forteNum : Maybe String
-        forteNum =
-            ForteNumbers.forteNum model.pcSet
-    in
-    div [ id "set-facts" ]
-        [ h3 [] [ text "Basic Set Properties" ]
-        , p []
+        , secondHeading "Basic Set Properties"
+        , paragraph [] 
             [ text (setToString <| normalForm model.pcSet)
             , text " is "
-            , listTransformationsOfPrimeForm model.pcSet
+            , html <| listTransformationsOfPrimeForm model.pcSet
             , text " of "
             , text (printPrimeForm <| PcSetBasics.primeForm model.pcSet)
-            , text
-                (case forteNum of
-                    Just s ->
-                        ". Forte number: " ++ s
-
-                    Nothing ->
-                        ""
-                )
             ]
-        , p []
+        , case ForteNumbers.forteNum model.pcSet of
+            Just s ->
+                paragraph [] [text <| "Forte number: " ++ s]
+            Nothing ->
+                none
+        , paragraph []
             [ text "Set Cardinality: "
             , text (cardinality model.pcSet |> String.fromInt)
             ]
-        , p []
+        , paragraph []
             [ text "Interval Class vector: "
             , text (printIcVector model)
             ]
+        , secondHeading "Related Sets"
+        , viewComplement model.pcSet
+        , viewZMate model.pcSet
+        , viewMSets model.pcSet
+        , viewIntervalCycles model.weightingConstant model.pcSet
         ]
 
 
-viewIntervalCycles : Float -> PcSet -> Html Msg
+viewAbout : Element Msg
+viewAbout =
+    textColumn [] 
+        [ sectionHeading "About Setmaker"
+        , paragraph [] [ text """Michael Buchler's Setmaker is nifty. Probably not terribly useful, but a fun little toy all the same."""]
+        ]
+    
+
+
+
+
+
+viewIntervalCycles : Float -> PcSet -> Element Msg
 viewIntervalCycles weightingConstant set =
     let
         viewCycleFragmentations : PcSet -> List String
@@ -349,25 +453,25 @@ viewIntervalCycles weightingConstant set =
                 |> List.map (List.map (\s -> "[" ++ s ++ "]"))
                 |> List.map (String.join " ")
     in
-    div [ id "interval-cycles" ]
-        [ h3 [] [ text "Interval Cycles" ]
-        , p []
+    column []
+        [ secondHeading "Interval Cycles" 
+        , paragraph []
             [ text "Interval Cycle Fragmentation of "
             , text (setToString set)
             ]
-        , ol []
+        , html <| Html.ol []
             (viewCycleFragmentations set
-                |> List.map (\s -> li [] [ text s ])
+                |> List.map (\s -> Html.li [] [ Html.text s ])
             )
-        , p []
+        , paragraph []
             [ text "IC Cycle Vector: "
             , text (iccvString set)
             ]
-        , p []
+        , paragraph []
             [ text "Weighted IC Cycle Vector: "
             , text (wiccvString weightingConstant set)
             ]
-        , viewCPSATV weightingConstant set
+        , html <| viewCPSATV weightingConstant set
 
         -- , viewCycleSaturationDetails weightingConstant set
         ]
@@ -416,42 +520,42 @@ viewCPSATV weightingConstant set =
                 |> String.join ", "
                 |> (\s -> "<" ++ s ++ ">")
     in
-    div []
-        [ p [] [ text cpsatv ]
-        , p []
-            [ span []
-                [ text "CycSatVec"
-                , Html.sub [] [ text "A" ]
-                , text ": "
+    Html.div []
+        [ Html.p [] [ Html.text cpsatv ]
+        , Html.p []
+            [ Html.span []
+                [ Html.text "CycSatVec"
+                , Html.sub [] [ Html.text "A" ]
+                , Html.text ": "
                 ]
-            , text csatvA
+            , Html.text csatvA
             ]
-        , p []
-            [ span []
-                [ text "CycSatVec"
-                , Html.sub [] [ text "B" ]
-                , text ": "
+        , Html.p []
+            [ Html.span []
+                [ Html.text "CycSatVec"
+                , Html.sub [] [ Html.text "B" ]
+                , Html.text ": "
                 ]
-            , text csatvB
+            , Html.text csatvB
             ]
         ]
 
+{- I don't think we need this -}
+
+{-
 
 viewGenericIntervalCycles : Int -> Html Msg
 viewGenericIntervalCycles modulus =
-    div []
-        [ p [] [ text "Generic Interval Cycles:" ]
-        , ol []
+    Html.div []
+        [ Html.p [] [ Html.text "Generic Interval Cycles:" ]
+        , Html.ol []
             (List.range 1 (modulus // 2)
                 |> List.map (IntervalCycles.genericIntervalCycle modulus)
                 |> List.map IntervalCycles.print
-                |> List.map (\s -> li [] [ text s ])
+                |> List.map (\s -> Html.li [] [ Html.text s ])
             )
         ]
 
-
-
-{- I don't think we need this -}
 
 
 viewCycleSaturationDetails : Float -> PcSet -> Html Msg
@@ -462,17 +566,17 @@ viewCycleSaturationDetails weightingConstant set =
 
         makeLi : CyclicProportionSaturation -> Html Msg
         makeLi cps =
-            li []
-                [ text "min: "
-                , text (String.fromFloat <| round2 cps.minimum)
-                , text "; max: "
-                , text (String.fromFloat <| round2 cps.maximum)
-                , text "; val:"
-                , text (String.fromFloat <| round2 cps.value)
+            Html.li []
+                [ Html.text "min: "
+                , Html.text (String.fromFloat <| round2 cps.minimum)
+                , Html.text "; max: "
+                , Html.text (String.fromFloat <| round2 cps.maximum)
+                , Html.text "; val:"
+                , Html.text (String.fromFloat <| round2 cps.value)
                 ]
     in
-    div [ id "cycle-saturation" ]
-        [ ol []
+    Html.div [ id "cycle-saturation" ]
+        [ Html.ol []
             (IntervalCycles.makeCPSATV weightingConstant set
                 |> List.map makeLi
             )
@@ -496,12 +600,12 @@ viewCycleOrders model =
         ic =
             String.fromInt model.icToOptimize
     in
-    div []
-        [ h3 [] [ text "Possible Sets to Minimize or Maximize Unbroken Interval Class Cycles" ]
+    Html.div []
+        [ Html.h3 [] [ Html.text "Possible Sets to Minimize or Maximize Unbroken Interval Class Cycles" ]
         , viewGenericIntervalCycles <| edoToInt model.edo
-        , p []
-            [ text "IC to minimize/maximize: "
-            , input
+        , Html.p []
+            [ Html.text "IC to minimize/maximize: "
+            , Html.input
                 [ type_ "number"
                 , Attr.min "1"
                 , Attr.max (String.fromInt <| (\i -> i // 2) <| edoToInt model.edo)
@@ -510,7 +614,7 @@ viewCycleOrders model =
                 ]
                 []
             ]
-        , h4 [] [ text ("Possible Sets to Minimize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
+        , Html.h4 [] [ Html.text ("Possible Sets to Minimize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
         , Html.ol []
             (List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> IntervalCycles.minCycleSaturationForCardinality model.edo model.icToOptimize i)
@@ -518,13 +622,13 @@ viewCycleOrders model =
                 |> List.map PcSetBasics.setToString
                 |> List.map
                     (\s ->
-                        li []
+                        Html.li []
                             [ Html.a [ Attr.href "#", onClick (ClickSetLink s) ]
-                                [ text s ]
+                                [ Html.text s ]
                             ]
                     )
             )
-        , h4 [] [ text ("Possible Sets to Maximize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
+        , Html.h4 [] [ Html.text ("Possible Sets to Maximize IC-" ++ ic ++ " Cyles for a Given Cardinality") ]
         , Html.ol []
             (List.range 1 (edoToInt model.edo)
                 |> List.map (\i -> List.take i maxOrdering)
@@ -533,9 +637,9 @@ viewCycleOrders model =
                 |> List.map PcSetBasics.setToString
                 |> List.map
                     (\s ->
-                        li []
+                        Html.li []
                             [ Html.a [ Attr.href "#", onClick (ClickSetLink s) ]
-                                [ text s ]
+                                [ Html.text s ]
                             ]
                     )
             )
@@ -569,20 +673,20 @@ viewMinOrMaxIcOccurences heading setsGenerator modulus =
                     setsGenerator modulus ic
             in
             Html.tr []
-                (Html.td [] [ text (String.fromInt ic) ]
+                (Html.td [] [ Html.text (String.fromInt ic) ]
                     :: (List.map (icCount ic) sets
                             |> List.map String.fromInt
-                            |> List.map (\s -> Html.td [] [ text s ])
+                            |> List.map (\s -> Html.td [] [ Html.text s ])
                        )
                 )
     in
-    div []
-        [ h3 [] [ text heading ]
+    Html.div []
+        [ Html.h3 [] [ Html.text heading ]
         , Html.table []
-            ((Html.th [] [ text "IC" ]
+            ((Html.th [] [ Html.text "IC" ]
                 :: (List.range 1 m
                         |> List.map String.fromInt
-                        |> List.map (\s -> Html.th [] [ text s ])
+                        |> List.map (\s -> Html.th [] [ Html.text s ])
                    )
              )
                 ++ (List.range 1 maxIc
@@ -602,7 +706,7 @@ viewMinWICCs edo weightingConstant =
         makeTR vals =
             Html.tr []
                 (List.map (\x -> String.fromFloat <| round2 x) vals
-                    |> List.map (\s -> Html.td [] [ text s ])
+                    |> List.map (\s -> Html.td [] [ Html.text s ])
                 )
 
         makeTRs : Array (Array Float) -> List (Html Msg)
@@ -611,13 +715,13 @@ viewMinWICCs edo weightingConstant =
                 |> Array.map makeTR
                 |> Array.toList
     in
-    div []
-        [ h3 [] [ text "minimum WICC values" ]
+    Html.div []
+        [ Html.h3 [] [ Html.text "minimum WICC values" ]
         , Html.table []
             [ Html.thead []
                 (List.range 0 (edoToInt edo)
                     |> List.map String.fromInt
-                    |> List.map (\s -> Html.th [] [ text s ])
+                    |> List.map (\s -> Html.th [] [ Html.text s ])
                 )
             , Html.tbody []
                 (minimumWICCs edo weightingConstant
@@ -636,7 +740,7 @@ viewMaxWICCs edo weightingConstant =
         makeTR vals =
             Html.tr []
                 (List.map (\x -> String.fromFloat <| round2 x) vals
-                    |> List.map (\s -> Html.td [] [ text s ])
+                    |> List.map (\s -> Html.td [] [ Html.text s ])
                 )
 
         makeTRs : Array (Array Float) -> List (Html Msg)
@@ -645,8 +749,8 @@ viewMaxWICCs edo weightingConstant =
                 |> Array.map makeTR
                 |> Array.toList
     in
-    div []
-        [ h3 [] [ text "maximum WICC values" ]
+    Html.div []
+        [ Html.h3 [] [ Html.text "maximum WICC values" ]
         , Html.table []
             [ Html.thead [] []
             , Html.tbody []
@@ -655,19 +759,10 @@ viewMaxWICCs edo weightingConstant =
                 )
             ]
         ]
+-}
 
 
-viewRelatedSets : PcSet -> Html Msg
-viewRelatedSets pcSet =
-    div []
-        [ h3 [] [ text "Related Sets" ]
-        , viewComplement pcSet
-        , viewZMate pcSet
-        , viewMSets pcSet
-        ]
-
-
-viewComplement : PcSet -> Html Msg
+viewComplement : PcSet -> Element Msg
 viewComplement pcSet =
     let
         complement =
@@ -679,24 +774,22 @@ viewComplement pcSet =
         cpf =
             PcSetBasics.primeForm complement
     in
-    div [ id "complement" ]
-        [ p []
-            [ text "Complement: "
-            , Html.a [ Attr.href "#", onClick (ClickSetLink complementString) ]
-                [ text complementString ]
-            , text " = "
-            , span []
+    paragraph []
+        [ text "Complement: "
+        , html <| Html.a [ Attr.href "#", onClick (ClickSetLink <| cleanup complementString) ]
+                [ Html.text complementString ]
+        , text " = "
+        , html <| Html.span []
                 (Transformations.possibleTransformations complement cpf
                     |> List.map printTransformation
-                    |> List.intersperse (span [] [ text " / " ])
+                    |> List.intersperse (Html.span [] [ Html.text " / " ])
                 )
-            , text " of "
-            , text (printPrimeForm cpf)
-            ]
+        , text " of "
+        , text <| printPrimeForm cpf
         ]
 
 
-viewZMate : PcSet -> Html Msg
+viewZMate : PcSet -> Element Msg
 viewZMate pcSet =
     let
         zMate =
@@ -704,18 +797,14 @@ viewZMate pcSet =
     in
     case zMate of
         Just z ->
-            div [ id "z-related-mate" ]
-                [ p []
-                    [ text "Z-related pair: "
-                    , Html.a [ Attr.href "#", onClick (ClickSetLink z) ] [ text z ]
-                    ]
+            paragraph []
+                [ text "Z-related pair: "
+                , html <| Html.a [ Attr.href "#", onClick (ClickSetLink z) ] [ Html.text z ]
                 ]
-
         Nothing ->
-            div [ id "z-related-mate" ] []
+            none
 
-
-viewMSets : PcSet -> Html Msg
+viewMSets : PcSet -> Element Msg
 viewMSets pcSet =
     let
         n =
@@ -737,22 +826,22 @@ viewMSets pcSet =
                 mSetPF =
                     PcSetBasics.primeForm mSet
             in
-            li []
-                [ span [] [ text "M", Html.sub [] [ text (String.fromInt i) ], text ": " ]
-                , Html.a [ Attr.href "#", onClick (ClickSetLink set) ] [ text set ]
-                , text " = "
-                , span []
+            Html.li []
+                [ Html.span [] [ Html.text "M", Html.sub [] [ Html.text (String.fromInt i) ], Html.text ": " ]
+                , Html.a [ Attr.href "#", onClick (ClickSetLink set) ] [ Html.text set ]
+                , Html.text " = "
+                , Html.span []
                     (Transformations.possibleTransformations mSet mSetPF
                         |> List.map printTransformation
-                        |> List.intersperse (span [] [ text " / " ])
+                        |> List.intersperse (Html.span [] [ Html.text " / " ])
                     )
-                , text " of "
-                , text (printPrimeForm mSetPF)
+                , Html.text " of "
+                , Html.text (printPrimeForm mSetPF)
                 ]
     in
-    div [ id "M-related-sets" ]
-        [ p [] [ text "M-related sets:" ]
-        , ul []
+    html <| Html.div [ id "M-related-sets" ]
+        [ Html.p [] [ Html.text "M-related sets:" ]
+        , Html.ul []
             (List.map makeLi coprimes)
         ]
 
@@ -775,10 +864,10 @@ printPrimeForm (PcSet _ pcs) =
 
 listTransformationsOfPrimeForm : PcSet -> Html Msg
 listTransformationsOfPrimeForm set =
-    span []
+    Html.span []
         (possibleTransformations (PcSetBasics.primeForm set) set
             |> List.map printTransformation
-            |> List.intersperse (span [] [ text " / " ])
+            |> List.intersperse (Html.span [] [ Html.text " / " ])
         )
 
 
@@ -786,7 +875,7 @@ printTransformation : Transformation -> Html Msg
 printTransformation t =
     case t of
         Transposition i ->
-            span [] [ text " T", Html.sub [] [ text (String.fromInt i) ] ]
+            Html.span [] [ Html.text "T", Html.sub [] [ Html.text (String.fromInt i) ] ]
 
         Inversion i ->
-            span [] [ text " I", Html.sub [] [ text (String.fromInt i) ] ]
+            Html.span [] [ Html.text "I", Html.sub [] [ Html.text (String.fromInt i) ] ]
