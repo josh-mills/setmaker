@@ -1,7 +1,5 @@
 module Main exposing (main)
 
---,( button, div, h1, h2, h3, h4, input, li, ol, p, span, text, ul)
-
 import Arithmetic
 import Array exposing (Array)
 import Browser
@@ -404,7 +402,7 @@ viewSetFacts model =
         , paragraph [] 
             [ text (setToString <| normalForm model.pcSetA)
             , text " is "
-            , html <| listTransformationsOfPrimeForm model.pcSetA
+            , listTransformationsOfPrimeForm model.pcSetA
             , text " of "
             , text (printPrimeForm <| PcSetBasics.primeForm model.pcSetA)
             ]
@@ -779,10 +777,10 @@ viewComplement pcSet =
         , html <| Html.a [ Attr.href "#", onClick (ClickSetLink <| cleanup complementString) ]
                 [ Html.text complementString ]
         , text " = "
-        , html <| Html.span []
+        , row []
                 (Transformations.possibleTransformations complement cpf
                     |> List.map printTransformation
-                    |> List.intersperse (Html.span [] [ Html.text " / " ])
+                    |> List.intersperse (el [] (text " / "))
                 )
         , text " of "
         , text <| printPrimeForm cpf
@@ -814,36 +812,68 @@ viewMSets pcSet =
             List.range 2 (n - 1)
                 |> List.filter (Arithmetic.isCoprimeTo n)
 
-        makeLi : Int -> Html Msg
-        makeLi i =
-            let
-                mSet =
-                    PcSetBasics.multiplySet i pcSet
-
-                set =
-                    PcSetBasics.setToString mSet
-
-                mSetPF =
-                    PcSetBasics.primeForm mSet
-            in
-            Html.li []
-                [ Html.span [] [ Html.text "M", Html.sub [] [ Html.text (String.fromInt i) ], Html.text ": " ]
-                , Html.a [ Attr.href "#", onClick (ClickSetLink set) ] [ Html.text set ]
-                , Html.text " = "
-                , Html.span []
-                    (Transformations.possibleTransformations mSet mSetPF
-                        |> List.map printTransformation
-                        |> List.intersperse (Html.span [] [ Html.text " / " ])
-                    )
-                , Html.text " of "
-                , Html.text (printPrimeForm mSetPF)
-                ]
+        data : List M_relation
+        data =
+            List.map (makeMrel pcSet) coprimes
     in
-    html <| Html.div [ id "M-related-sets" ]
-        [ Html.p [] [ Html.text "M-related sets:" ]
-        , Html.ul []
-            (List.map makeLi coprimes)
+    column []
+        [ paragraph [] [text "M-related sets"]
+        , table 
+            []
+            { data = data
+            , columns = 
+                [ { header = text "M Factor"
+                  , width = fill
+                  , view = 
+                        \mrel ->
+                            html <| Html.span [] [Html.text "M", Html.sub [] [Html.text <| String.fromInt mrel.factor]]
+                    }
+                , { header = text "Set"
+                  , width = fill
+                  , view = 
+                        \mrel ->
+                            text (PcSetBasics.setToString mrel.set)
+                    }
+                , { header = text "Transformation of Prime Form"
+                  , width = fill
+                  , view = 
+                        \mrel ->
+                            let
+                                mSetPF =
+                                    PcSetBasics.primeForm mrel.set
+                                
+                                transformations =
+                                    Transformations.possibleTransformations mrel.set mSetPF
+                                        |> List.map printTransformation
+                                        |> List.intersperse (el [] (text " / "))
+                                        |> row []
+                            in
+                            row [] 
+                                [ transformations
+                                , text " of "
+                                , text <| printPrimeForm mSetPF
+                                ]
+                  }
+                ]
+            }
         ]
+
+type alias M_relation =
+    { factor : Int
+    , set : PcSet
+    , setPF : PcSet
+    , transformationsOfPF : List Transformation
+    }
+
+makeMrel : PcSet -> Int -> M_relation
+makeMrel set factor =
+    let
+        s = 
+            PcSetBasics.multiplySet factor set
+        pf = 
+            PcSetBasics.primeForm s
+    in
+    M_relation factor s pf (possibleTransformations s pf)
 
 
 printIcVector : PcSet -> String
@@ -862,20 +892,20 @@ printPrimeForm (PcSet _ pcs) =
     "(" ++ String.join " " (List.map PcInt.toString pcs) ++ ")"
 
 
-listTransformationsOfPrimeForm : PcSet -> Html Msg
+listTransformationsOfPrimeForm : PcSet -> Element Msg
 listTransformationsOfPrimeForm set =
-    Html.span []
+    row []
         (possibleTransformations (PcSetBasics.primeForm set) set
             |> List.map printTransformation
-            |> List.intersperse (Html.span [] [ Html.text " / " ])
+            |> List.intersperse (el [] (text " / ")) 
         )
 
 
-printTransformation : Transformation -> Html Msg
+printTransformation : Transformation -> Element Msg
 printTransformation t =
     case t of
         Transposition i ->
-            Html.span [] [ Html.text "T", Html.sub [] [ Html.text (String.fromInt i) ] ]
+            html <| Html.span [] [ Html.text "T", Html.sub [] [ Html.text (String.fromInt i) ] ]
 
         Inversion i ->
-            Html.span [] [ Html.text "I", Html.sub [] [ Html.text (String.fromInt i) ] ]
+            html <| Html.span [] [ Html.text "I", Html.sub [] [ Html.text (String.fromInt i) ] ]
