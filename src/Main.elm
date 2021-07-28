@@ -48,9 +48,12 @@ main =
 
 
 type alias Model =
-    { userInput : String
-    , pitchClasses : List PitchClass
-    , pcSet : PcSet
+    { userInputA : String
+    , userInputB : String
+    , pitchClassesA : List PitchClass
+    , pitchClassesB : List PitchClass
+    , pcSetA : PcSet
+    , pcSetB : PcSet
     , edo : Edo
     , weightingConstant : Float
     , icToOptimize : Int
@@ -60,10 +63,17 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { userInput = ""
-      , pitchClasses = []
-      , pcSet = PcSet (edoFromInt 12) []
-      , edo = edoFromInt 12
+    let
+        edo =
+            edoFromInt 12
+    in
+    ( { userInputA = ""
+      , userInputB = ""
+      , pitchClassesA = []
+      , pitchClassesB = []
+      , pcSetA = PcSet edo []
+      , pcSetB = PcSet edo []
+      , edo = edo
       , weightingConstant = 1.2
       , icToOptimize = 1
       , option = SingleSet
@@ -77,15 +87,13 @@ init _ =
 
 
 type Msg
-    = Typing String
+    = TypingA String
+    | TypingB String
     | UpdateEdo Int
-    | UpdateEdoString String
-    | Calculate
     | Reset
     | UpdateIc String
     | ClickSetLink String
     | UpdateWeightingConstant Float
-    | UpdateWeightingConstantString String
     | ClickOption Option
 
 
@@ -105,84 +113,21 @@ update msg model =
             , Cmd.none )
 
         ClickSetLink set ->
-            update (Typing set) { model | userInput = set }
+            update (TypingA set) { model | userInputA = set }
 
-        Typing input ->
+        TypingA input ->
             let
-                edo12 : Bool
-                edo12 =
-                    edoToInt model.edo == 12
-
-                forteNumberRegex : Regex
-                forteNumberRegex =
-                    Maybe.withDefault Regex.never <|
-                        Regex.fromString "^(\\d{1,2})[-–][zZ]?(\\d{1,2})[zZ]?$"
-
-                isForteNumber : Bool
-                isForteNumber =
-                    edo12 && Regex.contains forteNumberRegex input
-
-                pcs : List PitchClass
-                pcs =
-                    if edo12 then
-                        PitchClass.listFromInput <| cleanup input
-
-                    else
-                        []
-
-                set : PcSet
-                set =
-                    if isForteNumber then
-                        let
-                            matches : List Int
-                            matches =
-                                Regex.find forteNumberRegex input
-                                    |> List.head
-                                    |> Maybe.map .submatches
-                                    |> Maybe.map (List.filterMap identity)
-                                    |> Maybe.map (List.filterMap String.toInt)
-                                    |> Maybe.map (List.take 2)
-                                    |> Maybe.withDefault []
-
-                            card : Int
-                            card =
-                                List.head matches
-                                    |> Maybe.withDefault 0
-
-                            catNum : Int
-                            catNum =
-                                List.drop 1 matches
-                                    |> List.head
-                                    |> Maybe.withDefault 0
-                        in
-                        Maybe.withDefault (PcSet model.edo []) <|
-                            ForteNumbers.primeFormForForteNumber card catNum
-
-                    else if edo12 then
-                        pcs
-                            |> List.map PitchClass.toInt
-                            |> List.map (PcInt.pcInt model.edo)
-                            |> PcSet model.edo
-
-                    else
-                        PcInt.listFromInput model.edo (cleanup input)
-                            |> PcSet model.edo
+                (pcs, set) = parseInput model.edo input
             in
-            ( { model | userInput = input, pitchClasses = pcs, pcSet = set }
+            ( { model | userInputA = input, pitchClassesA = pcs, pcSetA = set }
             , Cmd.none
             )
 
-        UpdateEdoString input ->
+        TypingB input ->
             let
-                newEdo : Edo
-                newEdo =
-                    edoFromInt <| Maybe.withDefault 12 <| String.toInt input
-
-                s : List PcInt
-                s =
-                    (\(PcSet _ pcs) -> pcs) model.pcSet
+                (pcs, set) = parseInput model.edo input
             in
-            ( { model | edo = newEdo, pcSet = PcSet newEdo s, weightingConstant = weightingConstantForEdo newEdo }
+            ( { model | userInputB = input, pitchClassesB = pcs, pcSetB = set }
             , Cmd.none
             )
 
@@ -193,11 +138,6 @@ update msg model =
                     edoFromInt input
             in
             ( { model | edo = newEdo, weightingConstant = weightingConstantForEdo newEdo } |> clearInputs
-            , Cmd.none
-            )
-
-        Calculate ->
-            ( model
             , Cmd.none
             )
 
@@ -216,15 +156,10 @@ update msg model =
             , Cmd.none
             )
 
-        UpdateWeightingConstantString k ->
-            ( { model | weightingConstant = Maybe.withDefault 1.2 <| String.toFloat k }
-            , Cmd.none
-            )
-
 
 clearInputs : Model -> Model
 clearInputs model =
-    { model | userInput = "", pitchClasses = [], pcSet = PcSet model.edo []}
+    { model | userInputA = "", userInputB = "", pitchClassesA = [], pitchClassesB = [], pcSetA = PcSet model.edo [], pcSetB = PcSet model.edo []}
 
 
 cleanup : String -> String
@@ -235,6 +170,71 @@ cleanup s =
                 Regex.fromString "[{}()\\[\\]]"
     in
     Regex.replace charsRegex (\_ -> "") s |> trim
+
+
+parseInput : Edo -> String -> (List PitchClass, PcSet)
+parseInput edo input =
+    let
+        edo12 : Bool
+        edo12 =
+            edoToInt edo == 12
+
+        forteNumberRegex : Regex
+        forteNumberRegex =
+            Maybe.withDefault Regex.never <|
+                Regex.fromString "^(\\d{1,2})[-–][zZ]?(\\d{1,2})[zZ]?$"
+
+        isForteNumber : Bool
+        isForteNumber =
+            edo12 && Regex.contains forteNumberRegex input
+
+        pcs : List PitchClass
+        pcs =
+            if edo12 then
+                PitchClass.listFromInput <| cleanup input
+
+            else
+                []
+
+        set : PcSet
+        set =
+            if isForteNumber then
+                let
+                    matches : List Int
+                    matches =
+                        Regex.find forteNumberRegex input
+                            |> List.head
+                            |> Maybe.map .submatches
+                            |> Maybe.map (List.filterMap identity)
+                            |> Maybe.map (List.filterMap String.toInt)
+                            |> Maybe.map (List.take 2)
+                            |> Maybe.withDefault []
+
+                    card : Int
+                    card =
+                        List.head matches
+                            |> Maybe.withDefault 0
+
+                    catNum : Int
+                    catNum =
+                        List.drop 1 matches
+                            |> List.head
+                            |> Maybe.withDefault 0
+                in
+                Maybe.withDefault (PcSet edo []) <|
+                    ForteNumbers.primeFormForForteNumber card catNum
+
+            else if edo12 then
+                pcs
+                    |> List.map PitchClass.toInt
+                    |> List.map (PcInt.pcInt edo)
+                    |> PcSet edo
+
+            else
+                PcInt.listFromInput edo (cleanup input)
+                    |> PcSet edo
+    in
+    (pcs, set)
 
 
 subscriptions : Model -> Sub Msg
@@ -376,8 +376,8 @@ viewSetFacts model =
         [ sectionHeading "View the Properties of a Single Set"
         , row [spacing 18]
             [ Input.text [width <| px 300, paddingXY 12 6, spacing 12]
-            { onChange = Typing
-            , text = model.userInput
+            { onChange = TypingA
+            , text = model.userInputA
             , placeholder = Just <| Input.placeholder [] 
                 (if edoToInt model.edo == 12 then
                     text "input set or Forte number"
@@ -396,36 +396,36 @@ viewSetFacts model =
                 }
             ]
         , paragraph [] 
-            [ text (String.join ", " (List.map PitchClass.toString model.pitchClasses))
-            , text (" " ++ setToString model.pcSet)
+            [ text (String.join ", " (List.map PitchClass.toString model.pitchClassesA))
+            , text (" " ++ setToString model.pcSetA)
             
             ]
         , secondHeading "Basic Set Properties"
         , paragraph [] 
-            [ text (setToString <| normalForm model.pcSet)
+            [ text (setToString <| normalForm model.pcSetA)
             , text " is "
-            , html <| listTransformationsOfPrimeForm model.pcSet
+            , html <| listTransformationsOfPrimeForm model.pcSetA
             , text " of "
-            , text (printPrimeForm <| PcSetBasics.primeForm model.pcSet)
+            , text (printPrimeForm <| PcSetBasics.primeForm model.pcSetA)
             ]
-        , case ForteNumbers.forteNum model.pcSet of
+        , case ForteNumbers.forteNum model.pcSetA of
             Just s ->
                 paragraph [] [text <| "Forte number: " ++ s]
             Nothing ->
                 none
         , paragraph []
             [ text "Set Cardinality: "
-            , text (cardinality model.pcSet |> String.fromInt)
+            , text (cardinality model.pcSetA |> String.fromInt)
             ]
         , paragraph []
             [ text "Interval Class vector: "
-            , text (printIcVector model)
+            , text (printIcVector model.pcSetA)
             ]
         , secondHeading "Related Sets"
-        , viewComplement model.pcSet
-        , viewZMate model.pcSet
-        , viewMSets model.pcSet
-        , viewIntervalCycles model.weightingConstant model.pcSet
+        , viewComplement model.pcSetA
+        , viewZMate model.pcSetA
+        , viewMSets model.pcSetA
+        , viewIntervalCycles model.weightingConstant model.pcSetA
         ]
 
 
@@ -846,10 +846,10 @@ viewMSets pcSet =
         ]
 
 
-printIcVector : Model -> String
-printIcVector model =
+printIcVector : PcSet -> String
+printIcVector set =
     "<"
-        ++ (icVector model.pcSet
+        ++ (icVector set
                 |> Array.toList
                 |> List.map String.fromInt
                 |> String.join ", "
