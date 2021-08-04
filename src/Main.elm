@@ -3,6 +3,7 @@ module Main exposing (main)
 import Arithmetic
 import Array exposing (Array)
 import Browser
+import Combinations exposing (Combination)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -46,10 +47,13 @@ main =
 
 
 type alias Model =
-    { userInputA : String
+    { userInput : String
+    , userInputA : String
     , userInputB : String
+    , pitchClasses : List PitchClass
     , pitchClassesA : List PitchClass
     , pitchClassesB : List PitchClass
+    , pcSet : PcSet
     , pcSetA : PcSet
     , pcSetB : PcSet
     , edo : Edo
@@ -65,10 +69,13 @@ init _ =
         edo =
             edoFromInt 12
     in
-    ( { userInputA = ""
+    ( { userInput = ""
+      , userInputA = ""
       , userInputB = ""
+      , pitchClasses = []
       , pitchClassesA = []
       , pitchClassesB = []
+      , pcSet = PcSet edo []
       , pcSetA = PcSet edo []
       , pcSetB = PcSet edo []
       , edo = edo
@@ -85,7 +92,8 @@ init _ =
 
 
 type Msg
-    = TypingA String
+    = Typing String
+    | TypingA String
     | TypingB String
     | UpdateEdo Int
     | Reset
@@ -111,7 +119,15 @@ update msg model =
             , Cmd.none )
 
         ClickSetLink set ->
-            update (TypingA set) { model | userInputA = set }
+            update (Typing set) { model | userInput = set, option = SingleSet }
+
+        Typing input ->
+            let
+                (pcs, set) = parseInput model.edo input
+            in
+            ( { model | userInput = input, pitchClasses = pcs, pcSet = set }
+            , Cmd.none
+            )
 
         TypingA input ->
             let
@@ -157,7 +173,7 @@ update msg model =
 
 clearInputs : Model -> Model
 clearInputs model =
-    { model | userInputA = "", userInputB = "", pitchClassesA = [], pitchClassesB = [], pcSetA = PcSet model.edo [], pcSetB = PcSet model.edo []}
+    { model | userInput = "", userInputA = "", userInputB = "", pitchClasses = [], pitchClassesA = [], pitchClassesB = [], pcSet = PcSet model.edo [], pcSetA = PcSet model.edo [], pcSetB = PcSet model.edo []}
 
 
 cleanup : String -> String
@@ -293,7 +309,7 @@ sectionHeading txt =
     el 
         [ Region.heading 1
         , Font.size 28
-        , padding 6
+        , paddingXY 0 8
         ]
         ( text txt )
 
@@ -310,7 +326,7 @@ secondHeading txt =
 
 mainContent : Model -> Element Msg
 mainContent model =
-    el [ Region.mainContent, paddingXY 20 20 ]
+    el [ Region.mainContent, paddingXY 8 20 ]
         (case model.option of
             Settings ->
                 viewSettings model
@@ -321,6 +337,9 @@ mainContent model =
             About ->
                 viewAbout
 
+            CombineSets ->
+                viewCombineSets model
+
             _ ->
                 sectionHeading "not implemented. :("
         )
@@ -328,7 +347,7 @@ mainContent model =
 
 viewSettings : Model -> Element Msg
 viewSettings model =
-    column [ width <| px 500, Font.size 18 ]
+    column [ width <| px 500]
         [ sectionHeading "Settings"
         , Input.slider
             sliderBackground
@@ -370,19 +389,10 @@ sliderBackground =
 
 viewSetFacts : Model -> Element Msg
 viewSetFacts model =
-    column [ spacing 8 ]
+    column [ spacing 8, width fill ]
         [ sectionHeading "View the Properties of a Single Set"
         , row [spacing 18]
-            [ Input.text [width <| px 300, paddingXY 12 6, spacing 12]
-            { onChange = TypingA
-            , text = model.userInputA
-            , placeholder = Just <| Input.placeholder [] 
-                (if edoToInt model.edo == 12 then
-                    text "input set or Forte number"
-                else
-                    text "input set")
-            , label = Input.labelLeft [] (text "input set:")
-            }
+            [ setInput (edoToInt model.edo == 12) model.userInput Typing
             , Input.button 
                 [ Background.color <| rgba 0.25 0.25 0.25 0.3
                 , Border.solid
@@ -393,38 +403,56 @@ viewSetFacts model =
                 , label = text "Clear"
                 }
             ]
-        , paragraph [] 
-            [ text (String.join ", " (List.map PitchClass.toString model.pitchClassesA))
-            , text (" " ++ setToString model.pcSetA)
+        , paragraph [ ] 
+            [ text (String.join ", " (List.map PitchClass.toString model.pitchClasses))
+            , text (" " ++ setToString model.pcSet)
             
             ]
         , secondHeading "Basic Set Properties"
         , paragraph [] 
-            [ text (setToString <| normalForm model.pcSetA)
-            , text " is "
-            , listTransformationsOfPrimeForm model.pcSetA
-            , text " of "
-            , text (printPrimeForm <| PcSetBasics.primeForm model.pcSetA)
-            ]
-        , case ForteNumbers.forteNum model.pcSetA of
+            (if cardinality model.pcSet > 0 then
+                [ text (setToString <| normalForm model.pcSet)
+                , text " is "
+                , listTransformationsOfPrimeForm model.pcSet
+                , text " of "
+                , text (printPrimeForm <| PcSetBasics.primeForm model.pcSet)
+                ]
+            else
+                [ text "{}" ])
+        , case ForteNumbers.forteNum model.pcSet of
             Just s ->
                 paragraph [] [text <| "Forte number: " ++ s]
             Nothing ->
                 none
         , paragraph []
             [ text "Set Cardinality: "
-            , text (cardinality model.pcSetA |> String.fromInt)
+            , text (cardinality model.pcSet |> String.fromInt)
             ]
         , paragraph []
             [ text "Interval Class vector: "
-            , text (printIcVector model.pcSetA)
+            , text (printIcVector model.pcSet)
             ]
         , secondHeading "Related Sets"
-        , viewComplement model.pcSetA
-        , viewZMate model.pcSetA
-        , viewMSets model.pcSetA
-        , viewIntervalCycles model.weightingConstant model.pcSetA
+        , viewComplement model.pcSet
+        , viewZMate model.pcSet
+        , viewMSets model.pcSet
+        , viewIntervalCycles model.weightingConstant model.pcSet
         ]
+
+
+setInput : Bool -> String -> (String -> Msg) -> Element Msg
+setInput isEdo12 inputText msg =
+    Input.text 
+        [width <| px 300, paddingXY 12 6, spacing 12]
+        { onChange = msg
+        , text = inputText
+        , placeholder = Just <| Input.placeholder [] 
+            (if isEdo12 then
+                text "input set or Forte number"
+            else
+                text "input set")
+        , label = Input.labelLeft [] (text "input set:")
+        }
 
 
 viewAbout : Element Msg
@@ -435,8 +463,83 @@ viewAbout =
         ]
     
 
+viewCombineSets : Model -> Element Msg
+viewCombineSets model =
+    let
+        combinations : List Combination
+        combinations = Combinations.combinatorialPossibilities model.pcSetA model.pcSetB
+
+        primeFormA = 
+            printPrimeForm <| PcSetBasics.primeForm model.pcSetA
+
+        primeFormB =
+            printPrimeForm <| PcSetBasics.primeForm model.pcSetB
+
+        needSets =
+            cardinality model.pcSetA == 0 || cardinality model.pcSetB == 0
+
+    in
+    
+    column [ spacing 8, width fill ]
+        [ sectionHeading "Combinatorial Possibilities of Two Set Classes"
+        , wrappedRow [ spacing 18 ]
+            [ column [ alignTop ]
+                [ setInput (edoToInt model.edo == 12) model.userInputA TypingA
+                , paragraph [ ]
+                    [ text (setToString <| normalForm model.pcSetA)
+                    , text " "
+                    , text primeFormA
+                    ]
+                ]
+            , column [ alignTop ] 
+                [ setInput (edoToInt model.edo == 12) model.userInputB TypingB
+                , paragraph [] 
+                    [ text (setToString <| normalForm model.pcSetB)
+                    , text " "
+                    , text primeFormB
+                    ]
+                ]
+            ]
+        , column [spacing 12, paddingXY 0 16] 
+            ( if needSets then
+                [ paragraph []
+                    [text """
+Provide two pitch class sets to combine, and I will give you all the ways
+you can combine the first set with some transformation of the second set
+without intersections.
+"""]
+                ]
+            else if List.length combinations > 0 then
+                (el [Region.heading 3] (text "Non-Intersecting Combinations"))
+                ::
+                (List.map printCombination combinations)
+            else
+                [ paragraph []
+                    [ text "There are no non-intersecting combinations of set classes "
+                    , text primeFormA
+                    , text " and "
+                    , text primeFormB
+                    , text "."
+                    ]
+                ]
+            )
+        ]
 
 
+printCombination : Combination -> Element Msg
+printCombination combination =
+    paragraph [spacing 0]
+        [ text <| setToString combination.a 
+        , text " + "
+        , printTransformation combination.t
+        , text " of "
+        , text <| setToString combination.b
+        , text " is "
+        , clickableSet <| PcSetBasics.normalForm combination.a_plus_tb
+        , text " "
+        , text <| printPrimeForm <| PcSetBasics.primeForm combination.a_plus_tb
+        ]
+        
 
 
 viewIntervalCycles : Float -> PcSet -> Element Msg
@@ -774,8 +877,7 @@ viewComplement pcSet =
     in
     paragraph []
         [ text "Complement: "
-        , html <| Html.a [ Attr.href "#", onClick (ClickSetLink <| cleanup complementString) ]
-                [ Html.text complementString ]
+        , clickableSet complement
         , text " = "
         , row []
                 (Transformations.possibleTransformations complement cpf
@@ -785,6 +887,17 @@ viewComplement pcSet =
         , text " of "
         , text <| printPrimeForm cpf
         ]
+
+
+clickableSet : PcSet -> Element Msg
+clickableSet set =
+    let
+        s = setToString set
+    in
+    
+    html <|
+        Html.a [ Attr.href "#", onClick (ClickSetLink <| cleanup <| s)] 
+        [Html.text s]
 
 
 viewZMate : PcSet -> Element Msg
@@ -819,23 +932,24 @@ viewMSets pcSet =
     column []
         [ paragraph [] [text "M-related sets"]
         , table 
-            []
+            [spacing 8, Border.width 1, Border.solid, centerX, paddingEach {top = 0, left = 20, bottom = 8, right = 8}]
             { data = data
             , columns = 
-                [ { header = text "M Factor"
-                  , width = fill
+                [ { header = paragraph [ width (fill |> minimum 50 )] []
+                  , width = shrink
                   , view = 
                         \mrel ->
-                            html <| Html.span [] [Html.text "M", Html.sub [] [Html.text <| String.fromInt mrel.factor]]
+                            el [ width fill ]
+                            (html <| Html.span [] [Html.text "M", Html.sub [] [Html.text <| String.fromInt mrel.factor]])
                     }
-                , { header = text "Set"
-                  , width = fill
+                , { header = el [ width (fill |> minimum 50) , centerY] (text "Set")
+                  , width = shrink
                   , view = 
                         \mrel ->
-                            text (PcSetBasics.setToString mrel.set)
+                            clickableSet mrel.set
                     }
-                , { header = text "Transformation of Prime Form"
-                  , width = fill
+                , { header = paragraph [] [text "Transformation of Prime Form"]
+                  , width = shrink
                   , view = 
                         \mrel ->
                             let
@@ -846,9 +960,9 @@ viewMSets pcSet =
                                     Transformations.possibleTransformations mrel.set mSetPF
                                         |> List.map printTransformation
                                         |> List.intersperse (el [] (text " / "))
-                                        |> row []
+                                        |> paragraph []
                             in
-                            row [] 
+                            paragraph [width fill] 
                                 [ transformations
                                 , text " of "
                                 , text <| printPrimeForm mSetPF

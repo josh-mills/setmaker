@@ -161,6 +161,11 @@ possibleTransformations (PcSet edoA pcsA) (PcSet _ pcsB) =
 
 
 
-{- u
-   transform : Transformation -> PcSet -> PcSet
--}
+transform : PcSet -> Transformation -> PcSet
+transform set transformation =
+    case transformation of
+        Transposition n ->
+            PcSetBasics.transposeSet n set
+
+        Inversion n ->
+            PcSetBasics.invertSet n set
