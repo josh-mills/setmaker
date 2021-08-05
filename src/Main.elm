@@ -181,7 +181,7 @@ cleanup s =
     let
         charsRegex =
             Maybe.withDefault Regex.never <|
-                Regex.fromString "[{}()\\[\\]]"
+                Regex.fromString "[{}()\\[\\],]"
     in
     Regex.replace charsRegex (\_ -> "") s |> trim
 
@@ -504,13 +504,12 @@ viewCombineSets model =
             ( if needSets then
                 [ paragraph []
                     [text """
-Provide two pitch class sets to combine, and I will give you all the ways
-you can combine the first set with some transformation of the second set
-without intersections.
+Provide two pitch class sets to combine, and I will give you all sorts of ways
+you can combine the two set classes.
 """]
                 ]
             else if List.length combinations > 0 then
-                (el [Region.heading 3] (text "Non-Intersecting Combinations"))
+                (secondHeading <| "Non-Intersecting Combinations of " ++ (setToString model.pcSetA) ++ " with " ++ primeFormB)
                 ::
                 (List.map printCombination combinations)
             else
@@ -537,7 +536,7 @@ printCombination combination =
         , text " is "
         , clickableSet <| PcSetBasics.normalForm combination.a_plus_tb
         , text " "
-        , text <| printPrimeForm <| PcSetBasics.primeForm combination.a_plus_tb
+        , clickablePrimeForm combination.a_plus_tb
         ]
         
 
@@ -554,7 +553,7 @@ viewIntervalCycles weightingConstant set =
                 |> List.map (List.map (\s -> "[" ++ s ++ "]"))
                 |> List.map (String.join " ")
     in
-    column []
+    column [ spacing 18 ]
         [ secondHeading "Interval Cycles" 
         , paragraph []
             [ text "Interval Cycle Fragmentation of "
@@ -894,11 +893,26 @@ clickableSet set =
     let
         s = setToString set
     in
-    
-    html <|
-        Html.a [ Attr.href "#", onClick (ClickSetLink <| cleanup <| s)] 
-        [Html.text s]
+    link 
+        [ Events.onClick <| ClickSetLink <| cleanup s
+        , Font.color linkColor ]
+        { url = "#", label = text s }
 
+
+clickablePrimeForm : PcSet -> Element Msg
+clickablePrimeForm set =
+    let
+        s = printPrimeForm <| PcSetBasics.primeForm set
+    in
+    link
+        [ Events.onClick <| ClickSetLink <| cleanup s
+        , Font.color linkColor ]
+        { url = "#", label = text s }
+
+
+linkColor : Color
+linkColor =
+    rgb255 6 69 173
 
 viewZMate : PcSet -> Element Msg
 viewZMate pcSet =
