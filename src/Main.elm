@@ -354,7 +354,7 @@ viewSettings model =
             { onChange = \x -> UpdateEdo (truncate x)
             , label = Input.labelLeft [] (text <| "modulus (" ++ (String.fromInt <| edoToInt model.edo) ++ "): ")
             , min = 1
-            , max = 48
+            , max = 96
             , value = toFloat <| edoToInt model.edo
             , thumb = Input.defaultThumb
             , step = Just 1
@@ -393,15 +393,7 @@ viewSetFacts model =
         [ sectionHeading "View the Properties of a Single Set"
         , row [spacing 18]
             [ setInput (edoToInt model.edo == 12) model.userInput Typing
-            , Input.button 
-                [ Background.color <| rgba 0.25 0.25 0.25 0.3
-                , Border.solid
-                , Border.rounded 5
-                , paddingXY 9 4
-                ] 
-                { onPress = Just Reset
-                , label = text "Clear"
-                }
+            , clearButton
             ]
         , paragraph [ ] 
             [ text (String.join ", " (List.map PitchClass.toString model.pitchClasses))
@@ -455,12 +447,43 @@ setInput isEdo12 inputText msg =
         }
 
 
+clearButton : Element Msg
+clearButton =
+    Input.button 
+        [ Background.color <| rgba 0.25 0.25 0.25 0.3
+        , Border.solid
+        , Border.rounded 5
+        , paddingXY 9 4
+        ] 
+        { onPress = Just Reset
+        , label = text "Clear"
+        }
+
+
 viewAbout : Element Msg
 viewAbout =
-    textColumn [] 
+    textColumn [ spacing 12 ] 
         [ sectionHeading "About Setmaker"
-        , paragraph [] [ text """Michael Buchler's Setmaker is nifty. Probably not terribly useful, but a fun little toy all the same."""]
+        , paragraph [] 
+            [ text """
+Setmaker features a host of tools for working with pitch-class sets (where octaves are equivalent). 
+One can view a wide variety of set properties, 
+combine subsets into larger sets, 
+view subsets of supersets (and even mutual supersets), 
+view all sets that have certain interval-class features, 
+check transformational (including split transformational) mappings of one set (not set class) onto another,
+and compare multiple sets using a wide variety of pc-based similarity measures. 
+"""         ]
+        , paragraph [] 
+            [ text """
+Setmaker was written by Michael Buchler as a command-line program. Downloadable executables for Windows are available """
+        , link [Font.color linkColor] {url = "https://myweb.fsu.edu/mbuchler/setmaker.html", label = text "here" }
+        , text """. 
+Conversion to a web application is an ongoing project by Josh Mills.
+        """
+            ]
         ]
+-- Setmaker works with both Forte's and Rahn's prime form algorithms.
     
 
 viewCombineSets : Model -> Element Msg
@@ -499,6 +522,8 @@ viewCombineSets model =
                     , text primeFormB
                     ]
                 ]
+            , column [ alignTop ]
+                [ clearButton ]
             ]
         , column [spacing 12, paddingXY 0 16] 
             ( if needSets then
@@ -867,9 +892,6 @@ viewComplement pcSet =
     let
         complement =
             PcSetBasics.complement pcSet
-
-        complementString =
-            setToString complement
 
         cpf =
             PcSetBasics.primeForm complement
